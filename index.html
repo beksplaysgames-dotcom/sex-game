@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Positions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="scene">
+    <div class="glow glow-a"></div>
+    <div class="glow glow-b"></div>
+    <div class="vignette"></div>
+
+    <!-- HOME / TIER SELECT SCREEN -->
+    <section id="screen-home" class="screen active">
+      <p class="eyebrow">for two</p>
+      <h1 class="title">Positions</h1>
+      <p class="subtitle">Pick your difficulty. We'll pick the rest.</p>
+
+      <div class="tier-grid">
+        <button class="tier-card" data-tier="Easy">
+          <span class="tier-num">I</span>
+          <span class="tier-name">Easy</span>
+        </button>
+        <button class="tier-card" data-tier="Medium">
+          <span class="tier-num">II</span>
+          <span class="tier-name">Medium</span>
+        </button>
+        <button class="tier-card" data-tier="Hard">
+          <span class="tier-num">III</span>
+          <span class="tier-name">Hard</span>
+        </button>
+        <button class="tier-card" data-tier="Extreme">
+          <span class="tier-num">IV</span>
+          <span class="tier-name">Extreme</span>
+        </button>
+      </div>
+
+      <button id="open-gallery" class="gallery-link">View all positions</button>
+    </section>
+
+    <!-- DRAW SCREEN -->
+    <section id="screen-draw" class="screen">
+      <div class="draw-topbar">
+        <button id="back-home" class="icon-btn" aria-label="Back to menu">←</button>
+        <select id="tier-select" class="tier-select" aria-label="Switch difficulty"></select>
+      </div>
+
+      <div class="card-frame">
+        <div id="position-image-wrap" class="position-image-wrap">
+          <img id="position-image" class="position-image" alt="" />
+          <div id="position-placeholder" class="position-placeholder">✦</div>
+        </div>
+        <p id="position-text" class="position-text"></p>
+      </div>
+
+      <div class="draw-actions">
+        <button id="shuffle-btn" class="draw-btn secondary">
+          <span class="compass">
+            <span class="needle"></span>
+          </span>
+          <span class="draw-label">Shuffle</span>
+        </button>
+        <button id="done-btn" class="draw-btn primary">
+          <span class="check-mark">✓</span>
+          <span class="draw-label">Done</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- GALLERY SCREEN -->
+    <section id="screen-gallery" class="screen">
+      <div class="draw-topbar">
+        <button id="back-home-2" class="icon-btn" aria-label="Back to menu">←</button>
+        <select id="gallery-tier-select" class="tier-select" aria-label="Filter by difficulty">
+          <option value="All">All</option>
+        </select>
+      </div>
+      <p class="gallery-progress" id="gallery-progress"></p>
+      <div id="gallery-grid" class="gallery-grid"></div>
+    </section>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
