@@ -346,12 +346,19 @@ html, body {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
+.gallery-item::before {
+  content: "";
+  display: block;
+  padding-top: 100%;
+}
 .gallery-item:hover {
   border-color: var(--crimson);
   box-shadow: 0 0 20px rgba(212,31,60,0.3);
 }
 
 .gallery-item img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -359,6 +366,8 @@ html, body {
 }
 
 .gallery-item .no-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: flex;
