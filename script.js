@@ -85,6 +85,105 @@
     document.getElementById(id).classList.add("active");
   }
 
+  // ---- Split landing screen: Positions vs Game ----
+  const PLAYERS_KEY = "positions_players_v1";
+  const GAMES = ["Truth or Dare", "Never Have I Ever", "Would You Rather", "20 Questions"];
+
+  const splitPositionsBtn = document.getElementById("split-positions");
+  const splitGameBtn = document.getElementById("split-game");
+  const backSplitHomeBtn = document.getElementById("back-split-home");
+  const backSplitNamesBtn = document.getElementById("back-split-names");
+  const backSplitGamePickBtn = document.getElementById("back-split-gamepick");
+  const backGamePickBtn = document.getElementById("back-game-pick");
+  const namesForm = document.getElementById("names-form");
+  const player1Input = document.getElementById("player1-input");
+  const player2Input = document.getElementById("player2-input");
+  const gameListEl = document.getElementById("game-list");
+  const gamePlayTitle = document.getElementById("game-play-title");
+  const gamePlayPlayers = document.getElementById("game-play-players");
+  const gameSettingsBtns = document.querySelectorAll(".game-settings-btn");
+  const backGameSettingsBtn = document.getElementById("back-game-settings");
+  const settingsForm = document.getElementById("settings-form");
+  const settingsPlayer1Input = document.getElementById("settings-player1-input");
+  const settingsPlayer2Input = document.getElementById("settings-player2-input");
+
+  function loadPlayers() {
+    try {
+      const raw = localStorage.getItem(PLAYERS_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function savePlayers(players) {
+    try {
+      localStorage.setItem(PLAYERS_KEY, JSON.stringify(players));
+    } catch (e) {
+      /* localStorage unavailable, names just won't persist */
+    }
+  }
+  function renderGameList() {
+    gameListEl.innerHTML = "";
+    GAMES.forEach((name) => {
+      const btn = document.createElement("button");
+      btn.className = "game-card";
+      btn.type = "button";
+      btn.textContent = name;
+      btn.addEventListener("click", () => {
+        const players = loadPlayers();
+        gamePlayTitle.textContent = name;
+        gamePlayPlayers.textContent = players ? `${players.player1} vs ${players.player2}` : "";
+        showScreen("screen-game-play");
+      });
+      gameListEl.appendChild(btn);
+    });
+  }
+  renderGameList();
+
+  splitPositionsBtn.addEventListener("click", () => showScreen("screen-home"));
+  splitGameBtn.addEventListener("click", () => {
+    const players = loadPlayers();
+    if (players && players.player1 && players.player2) {
+      showScreen("screen-game-pick");
+    } else {
+      showScreen("screen-names");
+    }
+  });
+
+  backSplitHomeBtn.addEventListener("click", () => showScreen("screen-split"));
+  backSplitNamesBtn.addEventListener("click", () => showScreen("screen-split"));
+  backSplitGamePickBtn.addEventListener("click", () => showScreen("screen-split"));
+  backGamePickBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+
+  namesForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const player1 = player1Input.value.trim();
+    const player2 = player2Input.value.trim();
+    if (!player1 || !player2) return;
+    savePlayers({ player1, player2 });
+    showScreen("screen-game-pick");
+  });
+
+  gameSettingsBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const players = loadPlayers();
+      settingsPlayer1Input.value = players ? players.player1 : "";
+      settingsPlayer2Input.value = players ? players.player2 : "";
+      showScreen("screen-game-settings");
+    });
+  });
+
+  backGameSettingsBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+
+  settingsForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const player1 = settingsPlayer1Input.value.trim();
+    const player2 = settingsPlayer2Input.value.trim();
+    if (!player1 || !player2) return;
+    savePlayers({ player1, player2 });
+    showScreen("screen-game-pick");
+  });
+
   // ---- Draw screen logic ----
   function poolFor(tier) {
     return POSITIONS.filter((p) => p.tier === tier);

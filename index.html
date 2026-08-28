@@ -6,7 +6,7 @@
 <title>Positions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5" />
+<link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
 
@@ -16,8 +16,21 @@
     <div class="vignette"></div>
     <button id="theme-toggle" class="theme-toggle" aria-label="Toggle neon theme" title="Toggle neon theme">&#10022;</button>
 
+    <!-- SPLIT LANDING SCREEN -->
+    <section id="screen-split" class="screen active split-screen">
+      <button id="split-positions" class="split-half split-positions">
+        <span class="split-label">Positions</span>
+      </button>
+      <button id="split-game" class="split-half split-game">
+        <span class="split-label">Game</span>
+      </button>
+    </section>
+
     <!-- HOME / TIER SELECT SCREEN -->
-    <section id="screen-home" class="screen active">
+    <section id="screen-home" class="screen">
+      <div class="draw-topbar">
+        <button id="back-split-home" class="icon-btn" aria-label="Back to menu">←</button>
+      </div>
       <p class="eyebrow">for two</p>
       <h1 class="title">Positions</h1>
       <p class="subtitle">Pick your difficulty. We'll pick the rest.</p>
@@ -84,6 +97,61 @@
       <p class="gallery-progress" id="gallery-progress"></p>
       <div id="gallery-grid" class="gallery-grid"></div>
     </section>
+
+    <!-- PLAYER NAMES SCREEN -->
+    <section id="screen-names" class="screen">
+      <div class="draw-topbar">
+        <button id="back-split-names" class="icon-btn" aria-label="Back to menu">←</button>
+      </div>
+      <h2 class="section-title">Who's playing?</h2>
+      <p class="subtitle">Enter both names to continue.</p>
+      <form id="names-form" class="names-form">
+        <input id="player1-input" class="name-input" type="text" placeholder="Player 1 name" maxlength="20" required />
+        <input id="player2-input" class="name-input" type="text" placeholder="Player 2 name" maxlength="20" required />
+        <button type="submit" class="draw-btn primary names-submit">
+          <span class="check-mark">✓</span>
+          <span class="draw-label">Start</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- GAME PICK SCREEN -->
+    <section id="screen-game-pick" class="screen">
+      <div class="draw-topbar">
+        <button id="back-split-gamepick" class="icon-btn" aria-label="Back to menu">←</button>
+        <button class="icon-btn game-settings-btn" aria-label="Game settings" title="Change player names">⚙</button>
+      </div>
+      <h2 class="section-title">Pick your game</h2>
+      <div id="game-list" class="game-list"></div>
+    </section>
+
+    <!-- GAME PLAY (PLACEHOLDER) SCREEN -->
+    <section id="screen-game-play" class="screen">
+      <div class="draw-topbar">
+        <button id="back-game-pick" class="icon-btn" aria-label="Back to game list">←</button>
+        <button class="icon-btn game-settings-btn" aria-label="Game settings" title="Change player names">⚙</button>
+      </div>
+      <h2 id="game-play-title" class="section-title"></h2>
+      <p id="game-play-players" class="subtitle"></p>
+      <p class="position-text game-play-note">This game's rules are coming soon.</p>
+    </section>
+
+    <!-- GAME SETTINGS SCREEN -->
+    <section id="screen-game-settings" class="screen">
+      <div class="draw-topbar">
+        <button id="back-game-settings" class="icon-btn" aria-label="Back">←</button>
+      </div>
+      <h2 class="section-title">Game settings</h2>
+      <p class="subtitle">Update player names.</p>
+      <form id="settings-form" class="names-form">
+        <input id="settings-player1-input" class="name-input" type="text" placeholder="Player 1 name" maxlength="20" required />
+        <input id="settings-player2-input" class="name-input" type="text" placeholder="Player 2 name" maxlength="20" required />
+        <button type="submit" class="draw-btn primary names-submit">
+          <span class="check-mark">✓</span>
+          <span class="draw-label">Save</span>
+        </button>
+      </form>
+    </section>
   </div>
 
   <script>
@@ -95,6 +163,6 @@
     }
   </script>
   <script src="data.js?v=3"></script>
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=6"></script>
 </body>
 </html>

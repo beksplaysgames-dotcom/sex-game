@@ -126,6 +126,115 @@ html, body {
   max-width: 720px;
 }
 
+/* SPLIT LANDING SCREEN */
+.split-screen {
+  max-width: 420px;
+  height: min(560px, calc(100vh - 48px));
+  gap: 14px;
+}
+.split-half {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  border: 1px solid rgba(212,175,55,0.3);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: border-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+  font-family: 'Inter', sans-serif;
+}
+.split-half:hover { transform: scale(1.02); }
+.split-positions:hover {
+  border-color: var(--crimson);
+  box-shadow: 0 0 40px rgba(212,31,60,0.3);
+}
+.split-game:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 40px rgba(212,175,55,0.3);
+}
+[data-theme="neon"] .split-half { border-color: rgba(155,48,255,0.35); }
+[data-theme="neon"] .split-positions:hover { box-shadow: 0 0 40px rgba(255,47,214,0.4); }
+[data-theme="neon"] .split-game:hover { box-shadow: 0 0 40px rgba(155,48,255,0.4); }
+.split-label {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 2.1rem;
+  color: var(--cream);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+/* NAMES / GAME PICK / GAME PLAY SCREENS */
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 2rem;
+  color: var(--cream);
+  margin: 0;
+  text-align: center;
+}
+.names-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 24px;
+}
+.name-input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid rgba(212,175,55,0.35);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+}
+.name-input::placeholder { color: var(--muted); }
+.name-input:focus { outline: none; border-color: var(--crimson); }
+.names-submit { margin-top: 6px; }
+
+.gamepick-change {
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.game-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+.game-card {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid rgba(212,175,55,0.3);
+  border-radius: 10px;
+  padding: 18px 20px;
+  color: var(--cream);
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.25s ease;
+}
+.game-card:hover {
+  border-color: var(--crimson);
+  transform: translateX(4px);
+  box-shadow: 0 0 20px rgba(212,31,60,0.25);
+}
+[data-theme="neon"] .game-card:hover { box-shadow: 0 0 24px rgba(255,47,214,0.4); }
+
+.game-play-note {
+  margin-top: 24px;
+  opacity: 0.6;
+  font-size: 1.2rem;
+}
+
 /* HOME SCREEN */
 .eyebrow {
   font-family: 'Inter', sans-serif;
