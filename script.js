@@ -1,6 +1,33 @@
 (function () {
   const TIERS = ["Easy", "Medium", "Hard", "Extreme"];
   const STORAGE_KEY = "positions_tried_v1";
+  const THEME_KEY = "positions_theme_v1";
+
+  // ---- Theme toggle (classic / neon), persisted in localStorage ----
+  const themeToggleBtn = document.getElementById("theme-toggle");
+  function applyTheme(theme) {
+    if (theme === "neon") {
+      document.documentElement.setAttribute("data-theme", "neon");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  }
+  let currentTheme = "classic";
+  try {
+    currentTheme = localStorage.getItem(THEME_KEY) || "classic";
+  } catch (e) {
+    /* localStorage unavailable, default to classic */
+  }
+  applyTheme(currentTheme);
+  themeToggleBtn.addEventListener("click", () => {
+    currentTheme = currentTheme === "neon" ? "classic" : "neon";
+    applyTheme(currentTheme);
+    try {
+      localStorage.setItem(THEME_KEY, currentTheme);
+    } catch (e) {
+      /* localStorage unavailable, theme choice just won't persist */
+    }
+  });
 
   const tierCards = document.querySelectorAll(".tier-card");
   const tierSelect = document.getElementById("tier-select");
