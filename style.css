@@ -341,10 +341,6 @@ html, body {
   border: 1px solid rgba(212,175,55,0.25);
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 .gallery-item::before {
   content: "";
