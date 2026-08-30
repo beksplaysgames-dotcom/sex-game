@@ -254,7 +254,14 @@
         }
       }
       fields.push(field);
-      rows.push(fields);
+      // Spreadsheet apps sometimes export a whole row as a single quoted cell
+      // (e.g. "Action,Kiss") if the columns weren't actually split when editing.
+      // Recover from that instead of silently dropping the row.
+      if (fields.length === 1 && fields[0].includes(",")) {
+        rows.push(fields[0].split(","));
+      } else {
+        rows.push(fields);
+      }
     }
     return rows;
   }
