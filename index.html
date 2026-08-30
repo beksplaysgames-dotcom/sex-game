@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#0B0507" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=10" />
+<link rel="stylesheet" href="style.css?v=14" />
 </head>
 <body>
 
@@ -142,6 +142,125 @@
       <p class="position-text game-play-note">This game's rules are coming soon.</p>
     </section>
 
+    <!-- TRUTH OR DARE — STARTING DIFFICULTY -->
+    <section id="screen-tod-start" class="screen">
+      <div class="draw-topbar">
+        <button id="back-tod-start" class="icon-btn" aria-label="Back to game list">←</button>
+        <button class="icon-btn game-settings-btn" aria-label="Game settings" title="Change player names">⚙</button>
+      </div>
+      <p class="eyebrow">truth or dare</p>
+      <h1 class="title tod-title">Pick your start</h1>
+      <p class="subtitle">You can level up later.</p>
+
+      <div class="tier-grid">
+        <button class="tier-card tod-start-tier" data-tier="Easy">
+          <span class="tier-num">I</span>
+          <span class="tier-name">Easy</span>
+        </button>
+        <button class="tier-card tod-start-tier" data-tier="Medium">
+          <span class="tier-num">II</span>
+          <span class="tier-name">Medium</span>
+        </button>
+        <button class="tier-card tod-start-tier" data-tier="Hard">
+          <span class="tier-num">III</span>
+          <span class="tier-name">Hard</span>
+        </button>
+        <button class="tier-card tod-start-tier" data-tier="Extreme">
+          <span class="tier-num">IV</span>
+          <span class="tier-name">Extreme</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- TRUTH OR DARE SCREEN -->
+    <section id="screen-tod" class="screen">
+      <div class="draw-topbar">
+        <button id="back-tod" class="icon-btn" aria-label="Back to game list">←</button>
+        <select id="tod-tier-select" class="tier-select" aria-label="Switch difficulty"></select>
+        <button class="icon-btn game-settings-btn" aria-label="Game settings" title="Change player names">⚙</button>
+      </div>
+      <p class="eyebrow" id="tod-turn"></p>
+      <h1 class="title tod-title">Truth or Dare</h1>
+
+      <div id="tod-choice" class="tod-choice">
+        <button id="tod-truth-btn" class="draw-btn secondary tod-choice-btn" type="button">
+          <span class="draw-label">Truth</span>
+        </button>
+        <button id="tod-dare-btn" class="draw-btn primary tod-choice-btn" type="button">
+          <span class="draw-label">Dare</span>
+        </button>
+      </div>
+
+      <div id="tod-reveal" class="card-frame tod-reveal hidden">
+        <p id="tod-kind" class="tod-kind"></p>
+        <p id="tod-text" class="position-text"></p>
+      </div>
+
+      <button id="tod-next-btn" class="draw-btn primary tod-next hidden" type="button">
+        <span class="check-mark">✓</span>
+        <span class="draw-label">Next turn</span>
+      </button>
+
+      <div id="tod-levelup" class="card-frame tod-levelup hidden">
+        <p id="tod-levelup-text" class="position-text"></p>
+        <div class="tod-levelup-actions">
+          <button id="tod-levelup-no" class="draw-btn secondary" type="button">
+            <span class="draw-label">Stay here</span>
+          </button>
+          <button id="tod-levelup-yes" class="draw-btn primary" type="button">
+            <span class="draw-label">Level up</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- DICE GAME SCREEN -->
+    <section id="screen-dice" class="screen">
+      <div class="draw-topbar">
+        <button id="back-dice" class="icon-btn" aria-label="Back to game list">←</button>
+        <button class="icon-btn game-settings-btn" aria-label="Game settings" title="Change player names">⚙</button>
+      </div>
+      <p class="eyebrow" id="dice-turn"></p>
+      <h1 class="title tod-title">Dice Game</h1>
+
+      <div class="dice-row">
+        <div class="die-scene">
+          <div id="die-cube-1" class="die-cube">
+            <div class="die-face die-face-front"></div>
+            <div class="die-face die-face-back"></div>
+            <div class="die-face die-face-right"></div>
+            <div class="die-face die-face-left"></div>
+            <div class="die-face die-face-top"></div>
+            <div class="die-face die-face-bottom"></div>
+          </div>
+        </div>
+        <div class="die-scene">
+          <div id="die-cube-2" class="die-cube">
+            <div class="die-face die-face-front"></div>
+            <div class="die-face die-face-back"></div>
+            <div class="die-face die-face-right"></div>
+            <div class="die-face die-face-left"></div>
+            <div class="die-face die-face-top"></div>
+            <div class="die-face die-face-bottom"></div>
+          </div>
+        </div>
+      </div>
+
+      <button id="dice-roll-btn" class="draw-btn primary dice-roll" type="button">
+        <span class="compass">
+          <span class="needle"></span>
+        </span>
+        <span class="draw-label">Roll</span>
+      </button>
+
+      <p id="dice-result" class="position-text dice-result hidden"></p>
+
+      <button id="dice-next-btn" class="draw-btn primary tod-next hidden" type="button">
+        <span class="check-mark">✓</span>
+        <span class="draw-label">Next turn</span>
+      </button>
+    </section>
+
     <!-- GAME SETTINGS SCREEN -->
     <section id="screen-game-settings" class="screen">
       <div class="draw-topbar">
@@ -169,6 +288,6 @@
     }
   </script>
   <script src="data.js?v=3"></script>
-  <script src="script.js?v=6"></script>
+  <script src="script.js?v=14"></script>
 </body>
 </html>

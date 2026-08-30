@@ -29,7 +29,7 @@
     }
   });
 
-  const tierCards = document.querySelectorAll(".tier-card");
+  const tierCards = document.querySelectorAll("#screen-home .tier-card");
   const tierSelect = document.getElementById("tier-select");
   const backHomeBtn = document.getElementById("back-home");
   const shuffleBtn = document.getElementById("shuffle-btn");
@@ -87,7 +87,7 @@
 
   // ---- Split landing screen: Positions vs Game ----
   const PLAYERS_KEY = "positions_players_v1";
-  const GAMES = ["Truth or Dare", "Never Have I Ever", "Would You Rather", "20 Questions"];
+  const GAMES = ["Truth or Dare", "Dice Game", "Never Have I Ever", "Would You Rather", "20 Questions"];
 
   const splitPositionsBtn = document.getElementById("split-positions");
   const splitGameBtn = document.getElementById("split-game");
@@ -130,6 +130,14 @@
       btn.type = "button";
       btn.textContent = name;
       btn.addEventListener("click", () => {
+        if (name === "Truth or Dare") {
+          showScreen("screen-tod-start");
+          return;
+        }
+        if (name === "Dice Game") {
+          enterDiceGame();
+          return;
+        }
         const players = loadPlayers();
         gamePlayTitle.textContent = name;
         gamePlayPlayers.textContent = players ? `${players.player1} vs ${players.player2}` : "";
@@ -183,6 +191,331 @@
     savePlayers({ player1, player2 });
     showScreen("screen-game-pick");
   });
+
+  // ---- Truth or Dare ----
+  const backTodBtn = document.getElementById("back-tod");
+  const todTurnEl = document.getElementById("tod-turn");
+  const todTierSelect = document.getElementById("tod-tier-select");
+  const todChoiceEl = document.getElementById("tod-choice");
+  const todTruthBtn = document.getElementById("tod-truth-btn");
+  const todDareBtn = document.getElementById("tod-dare-btn");
+  const todRevealEl = document.getElementById("tod-reveal");
+  const todKindEl = document.getElementById("tod-kind");
+  const todTextEl = document.getElementById("tod-text");
+  const todNextBtn = document.getElementById("tod-next-btn");
+  const todLevelUpEl = document.getElementById("tod-levelup");
+  const todLevelUpTextEl = document.getElementById("tod-levelup-text");
+  const todLevelUpYesBtn = document.getElementById("tod-levelup-yes");
+  const todLevelUpNoBtn = document.getElementById("tod-levelup-no");
+
+  const TOD_ROUNDS_BEFORE_ASK = 5;
+
+  let todPlayerIndex = 0;
+  let todTier = "Easy";
+  let todRoundsAtTier = 0;
+  let todLastTruthIndex = -1;
+  let todLastDareIndex = -1;
+  let TRUTHS = [];
+  let DARES = [];
+
+  TIERS.forEach((tier) => {
+    const opt = document.createElement("option");
+    opt.value = tier;
+    opt.textContent = tier;
+    todTierSelect.appendChild(opt);
+  });
+
+  // Minimal CSV parser: handles quoted fields, embedded commas, and "" as an escaped quote.
+  function parseCSV(text) {
+    const rows = [];
+    const lines = text.split(/\r\n|\n|\r/).filter((line) => line.trim() !== "");
+    for (const line of lines) {
+      const fields = [];
+      let field = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuotes) {
+          if (ch === '"' && line[i + 1] === '"') {
+            field += '"';
+            i++;
+          } else if (ch === '"') {
+            inQuotes = false;
+          } else {
+            field += ch;
+          }
+        } else if (ch === '"') {
+          inQuotes = true;
+        } else if (ch === ",") {
+          fields.push(field);
+          field = "";
+        } else {
+          field += ch;
+        }
+      }
+      fields.push(field);
+      rows.push(fields);
+    }
+    return rows;
+  }
+
+  fetch("truth-or-dare-data.csv?v=2")
+    .then((res) => res.text())
+    .then((text) => {
+      const rows = parseCSV(text);
+      rows.shift(); // drop header row
+      rows.forEach(([kind, tier, prompt]) => {
+        if (!kind || !tier || !prompt) return;
+        const normalized = kind.trim().toLowerCase();
+        const entry = { tier: tier.trim(), text: prompt.trim() };
+        if (normalized === "truth") TRUTHS.push(entry);
+        else if (normalized === "dare") DARES.push(entry);
+      });
+    })
+    .catch(() => {
+      /* CSV unreachable (e.g. opened via file:// instead of a server) — Truth or Dare falls back to its empty-pool message */
+    });
+
+  function todCurrentPlayerName() {
+    const players = loadPlayers();
+    if (!players) return "Player " + (todPlayerIndex + 1);
+    return todPlayerIndex === 0 ? players.player1 : players.player2;
+  }
+
+  function todShowChoice() {
+    todTurnEl.textContent = `${todCurrentPlayerName()}'s turn · ${todTier}`;
+    todChoiceEl.classList.remove("hidden");
+    todRevealEl.classList.add("hidden");
+    todNextBtn.classList.add("hidden");
+    todLevelUpEl.classList.add("hidden");
+  }
+
+  function todShowLevelUpAsk() {
+    const nextTier = TIERS[TIERS.indexOf(todTier) + 1];
+    todLevelUpTextEl.textContent = `You've done ${TOD_ROUNDS_BEFORE_ASK} rounds of ${todTier}. Ready to level up to ${nextTier}?`;
+    todChoiceEl.classList.add("hidden");
+    todRevealEl.classList.add("hidden");
+    todNextBtn.classList.add("hidden");
+    todLevelUpEl.classList.remove("hidden");
+  }
+
+  function todDraw(kind) {
+    const source = kind === "Truth" ? TRUTHS : DARES;
+    const pool = source.filter((entry) => entry.tier === todTier);
+    if (pool.length === 0) {
+      todKindEl.textContent = kind;
+      todTextEl.textContent = `No ${todTier} ${kind.toLowerCase()} prompts yet — add some to truth-or-dare-data.csv.`;
+    } else {
+      let idx;
+      if (pool.length === 1) {
+        idx = 0;
+      } else {
+        const lastIdx = kind === "Truth" ? todLastTruthIndex : todLastDareIndex;
+        do {
+          idx = Math.floor(Math.random() * pool.length);
+        } while (idx === lastIdx);
+      }
+      if (kind === "Truth") {
+        todLastTruthIndex = idx;
+      } else {
+        todLastDareIndex = idx;
+      }
+      todKindEl.textContent = kind;
+      todTextEl.textContent = pool[idx].text;
+    }
+    todRoundsAtTier++;
+    todChoiceEl.classList.add("hidden");
+    todRevealEl.classList.remove("hidden");
+    todNextBtn.classList.remove("hidden");
+  }
+
+  function enterTruthOrDare(startTier) {
+    todPlayerIndex = 0;
+    todTier = startTier;
+    todTierSelect.value = todTier;
+    todRoundsAtTier = 0;
+    todLastTruthIndex = -1;
+    todLastDareIndex = -1;
+    showScreen("screen-tod");
+    todShowChoice();
+  }
+
+  document.querySelectorAll(".tod-start-tier").forEach((card) => {
+    card.addEventListener("click", () => enterTruthOrDare(card.dataset.tier));
+  });
+
+  document.getElementById("back-tod-start").addEventListener("click", () => showScreen("screen-game-pick"));
+
+  todTruthBtn.addEventListener("click", () => todDraw("Truth"));
+  todDareBtn.addEventListener("click", () => todDraw("Dare"));
+
+  todTierSelect.addEventListener("change", (e) => {
+    todTier = e.target.value;
+    todRoundsAtTier = 0;
+    todLastTruthIndex = -1;
+    todLastDareIndex = -1;
+    todShowChoice();
+  });
+
+  todLevelUpYesBtn.addEventListener("click", () => {
+    todTier = TIERS[TIERS.indexOf(todTier) + 1];
+    todTierSelect.value = todTier;
+    todRoundsAtTier = 0;
+    todLastTruthIndex = -1;
+    todLastDareIndex = -1;
+    todShowChoice();
+  });
+
+  todLevelUpNoBtn.addEventListener("click", () => {
+    todRoundsAtTier = 0;
+    todShowChoice();
+  });
+
+  todNextBtn.addEventListener("click", () => {
+    todPlayerIndex = todPlayerIndex === 0 ? 1 : 0;
+    const hasNextTier = TIERS.indexOf(todTier) < TIERS.length - 1;
+    if (hasNextTier && todRoundsAtTier >= TOD_ROUNDS_BEFORE_ASK) {
+      todShowLevelUpAsk();
+    } else {
+      todShowChoice();
+    }
+  });
+
+  backTodBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+
+  // ---- Dice Game ----
+  const backDiceBtn = document.getElementById("back-dice");
+  const diceTurnEl = document.getElementById("dice-turn");
+  const diceCube1 = document.getElementById("die-cube-1");
+  const diceCube2 = document.getElementById("die-cube-2");
+  const diceRollBtn = document.getElementById("dice-roll-btn");
+  const diceResultEl = document.getElementById("dice-result");
+  const diceNextBtn = document.getElementById("dice-next-btn");
+
+  // Order must match the .die-face-* CSS classes, and DIE_FACE_BASE_ROTATION below.
+  const DIE_FACE_ORDER = ["front", "back", "right", "left", "top", "bottom"];
+  const DIE_FACE_BASE_ROTATION = [
+    { x: 0, y: 0 },
+    { x: 0, y: 180 },
+    { x: 0, y: -90 },
+    { x: 0, y: 90 },
+    { x: -90, y: 0 },
+    { x: 90, y: 0 },
+  ];
+
+  let dicePlayerIndex = 0;
+  let diceRolling = false;
+  const dieStates = [
+    { words: [], lastFace: -1, x: 0, y: 0 },
+    { words: [], lastFace: -1, x: 0, y: 0 },
+  ];
+
+  function renderDieFaces(cubeEl, words) {
+    DIE_FACE_ORDER.forEach((face, i) => {
+      const faceEl = cubeEl.querySelector(`.die-face-${face}`);
+      if (faceEl) faceEl.textContent = words[i] || "";
+    });
+  }
+
+  fetch("dice-game-data.csv?v=1")
+    .then((res) => res.text())
+    .then((text) => {
+      const rows = parseCSV(text);
+      rows.shift(); // drop header row
+      const actions = [];
+      const locations = [];
+      rows.forEach(([die, prompt]) => {
+        if (!die || !prompt) return;
+        const normalized = die.trim().toLowerCase();
+        if (normalized === "action") actions.push(prompt.trim());
+        else if (normalized === "location") locations.push(prompt.trim());
+      });
+      if (actions.length === 6 && locations.length === 6) {
+        dieStates[0].words = actions;
+        dieStates[1].words = locations;
+        renderDieFaces(diceCube1, actions);
+        renderDieFaces(diceCube2, locations);
+      }
+    })
+    .catch(() => {
+      /* CSV unreachable (e.g. opened via file:// instead of a server) — roll will show a fallback message */
+    });
+
+  function diceCurrentPlayerName() {
+    const players = loadPlayers();
+    if (!players) return "Player " + (dicePlayerIndex + 1);
+    return dicePlayerIndex === 0 ? players.player1 : players.player2;
+  }
+
+  function diceShowReady() {
+    diceTurnEl.textContent = `${diceCurrentPlayerName()}'s turn`;
+    diceRollBtn.classList.remove("hidden");
+    diceResultEl.classList.add("hidden");
+    diceNextBtn.classList.add("hidden");
+  }
+
+  // Rotates one die to a random new face (never repeating the previous one) and
+  // returns the word on that face. Rotation accumulates across rolls (rather than
+  // resetting to 0) so the cube always spins forward into its next position, plus
+  // a few extra full turns for visual flair.
+  function rollOneDie(cubeEl, state) {
+    let faceIndex;
+    do {
+      faceIndex = Math.floor(Math.random() * 6);
+    } while (faceIndex === state.lastFace);
+    state.lastFace = faceIndex;
+
+    const base = DIE_FACE_BASE_ROTATION[faceIndex];
+    const extraX = (2 + Math.floor(Math.random() * 2)) * 360 * (Math.random() < 0.5 ? 1 : -1);
+    const extraY = (2 + Math.floor(Math.random() * 2)) * 360 * (Math.random() < 0.5 ? 1 : -1);
+    const deltaX = (((base.x - state.x) % 360) + 360) % 360;
+    const deltaY = (((base.y - state.y) % 360) + 360) % 360;
+    state.x += deltaX + extraX;
+    state.y += deltaY + extraY;
+    cubeEl.style.transform = `rotateX(${state.x}deg) rotateY(${state.y}deg)`;
+    return state.words[faceIndex];
+  }
+
+  diceRollBtn.addEventListener("click", () => {
+    if (diceRolling) return;
+    if (dieStates[0].words.length !== 6 || dieStates[1].words.length !== 6) {
+      diceResultEl.textContent = "Add exactly 6 Action and 6 Location rows to dice-game-data.csv.";
+      diceResultEl.classList.remove("hidden");
+      return;
+    }
+    diceRolling = true;
+    diceRollBtn.disabled = true;
+    spinCompassOn(diceRollBtn);
+    const word1 = rollOneDie(diceCube1, dieStates[0]);
+    const word2 = rollOneDie(diceCube2, dieStates[1]);
+
+    const finish = () => {
+      diceRolling = false;
+      diceRollBtn.disabled = false;
+      diceResultEl.textContent = `${word1} · ${word2}`;
+      diceResultEl.classList.remove("hidden");
+      diceRollBtn.classList.add("hidden");
+      diceNextBtn.classList.remove("hidden");
+    };
+    diceCube1.addEventListener("transitionend", finish, { once: true });
+    // Fallback in case transitionend never fires (e.g. reduced-motion edge cases).
+    setTimeout(() => {
+      if (diceRolling) finish();
+    }, 1400);
+  });
+
+  diceNextBtn.addEventListener("click", () => {
+    dicePlayerIndex = dicePlayerIndex === 0 ? 1 : 0;
+    diceShowReady();
+  });
+
+  backDiceBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+
+  function enterDiceGame() {
+    dicePlayerIndex = 0;
+    showScreen("screen-dice");
+    diceShowReady();
+  }
 
   // ---- Draw screen logic ----
   function poolFor(tier) {
