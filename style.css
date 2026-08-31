@@ -343,7 +343,7 @@ html, body {
 .die-face-bottom { transform: rotateX(-90deg) translateZ(50px); }
 
 .dice-roll { width: 100%; margin-top: 32px; }
-.dice-result { margin-top: 24px; }
+p.dice-result { margin-top: 48px; }
 
 @media (prefers-reduced-motion: reduce) {
   .die-cube { transition: transform 0.05s linear; }
