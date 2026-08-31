@@ -87,20 +87,17 @@
 
   // ---- Split landing screen: Positions vs Game ----
   const PLAYERS_KEY = "positions_players_v1";
-  const GAMES = ["Truth or Dare", "Dice Game", "Never Have I Ever", "Would You Rather", "20 Questions"];
+  const GAMES = ["Truth or Dare", "Dice Game"];
 
   const splitPositionsBtn = document.getElementById("split-positions");
   const splitGameBtn = document.getElementById("split-game");
   const backSplitHomeBtn = document.getElementById("back-split-home");
   const backSplitNamesBtn = document.getElementById("back-split-names");
   const backSplitGamePickBtn = document.getElementById("back-split-gamepick");
-  const backGamePickBtn = document.getElementById("back-game-pick");
   const namesForm = document.getElementById("names-form");
   const player1Input = document.getElementById("player1-input");
   const player2Input = document.getElementById("player2-input");
   const gameListEl = document.getElementById("game-list");
-  const gamePlayTitle = document.getElementById("game-play-title");
-  const gamePlayPlayers = document.getElementById("game-play-players");
   const gameSettingsBtns = document.querySelectorAll(".game-settings-btn");
   const backGameSettingsBtn = document.getElementById("back-game-settings");
   const settingsForm = document.getElementById("settings-form");
@@ -132,16 +129,9 @@
       btn.addEventListener("click", () => {
         if (name === "Truth or Dare") {
           showScreen("screen-tod-start");
-          return;
-        }
-        if (name === "Dice Game") {
+        } else if (name === "Dice Game") {
           showScreen("screen-dice-start");
-          return;
         }
-        const players = loadPlayers();
-        gamePlayTitle.textContent = name;
-        gamePlayPlayers.textContent = players ? `${players.player1} vs ${players.player2}` : "";
-        showScreen("screen-game-play");
       });
       gameListEl.appendChild(btn);
     });
@@ -161,7 +151,6 @@
   backSplitHomeBtn.addEventListener("click", () => showScreen("screen-split"));
   backSplitNamesBtn.addEventListener("click", () => showScreen("screen-split"));
   backSplitGamePickBtn.addEventListener("click", () => showScreen("screen-split"));
-  backGamePickBtn.addEventListener("click", () => showScreen("screen-game-pick"));
 
   namesForm.addEventListener("submit", (e) => {
     e.preventDefault();

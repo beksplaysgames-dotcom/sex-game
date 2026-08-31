@@ -248,12 +248,6 @@ html, body {
 }
 [data-theme="neon"] .game-card:hover { box-shadow: 0 0 24px rgba(255,47,214,0.4); }
 
-.game-play-note {
-  margin-top: 24px;
-  opacity: 0.6;
-  font-size: 1.2rem;
-}
-
 /* TRUTH OR DARE SCREEN */
 .hidden { display: none !important; }
 .tod-title {
