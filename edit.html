@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Edit Content</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=17" />
+<link rel="stylesheet" href="edit.css?v=1" />
+</head>
+<body>
+
+  <div class="edit-page">
+    <p class="eyebrow">not linked anywhere in the app</p>
+    <h1 class="edit-title">Edit Prompts</h1>
+    <p class="subtitle">Edit below, then use each "Copy" button and paste the result over the matching file, then commit &amp; push.</p>
+
+    <div class="edit-tabs">
+      <button class="edit-tab active" type="button" data-target="panel-positions">Positions</button>
+      <button class="edit-tab" type="button" data-target="panel-tod">Truth or Dare</button>
+      <button class="edit-tab" type="button" data-target="panel-dice">Dice Game</button>
+    </div>
+
+    <!-- POSITIONS -->
+    <section id="panel-positions" class="edit-panel active">
+      <div class="edit-toolbar">
+        <input id="positions-search" class="edit-search" type="text" placeholder="Search by name..." />
+        <select id="positions-filter" class="tier-select" aria-label="Filter by difficulty">
+          <option value="All">All tiers</option>
+        </select>
+      </div>
+      <div class="edit-toolbar">
+        <button id="positions-add" class="edit-btn" type="button">+ Add position</button>
+        <button id="positions-copy" class="edit-btn primary" type="button">Copy updated data.js</button>
+      </div>
+      <p id="positions-count" class="edit-count"></p>
+      <div id="positions-list" class="edit-list"></div>
+    </section>
+
+    <!-- TRUTH OR DARE -->
+    <section id="panel-tod" class="edit-panel">
+      <div class="edit-toolbar">
+        <button id="tod-add" class="edit-btn" type="button">+ Add prompt</button>
+        <button id="tod-copy" class="edit-btn primary" type="button">Copy updated CSV</button>
+      </div>
+      <p id="tod-count" class="edit-count"></p>
+      <div id="tod-list" class="edit-list"></div>
+    </section>
+
+    <!-- DICE GAME -->
+    <section id="panel-dice" class="edit-panel">
+      <div class="edit-toolbar">
+        <button id="dice-copy" class="edit-btn primary" type="button">Copy updated CSV</button>
+      </div>
+      <p class="edit-hint">Each tier needs exactly 6 Action words and 6 Location words — one per face of a die.</p>
+      <div id="dice-groups"></div>
+    </section>
+
+    <div class="edit-output-wrap hidden" id="output-wrap">
+      <p class="edit-hint">Copied! If your browser blocked the automatic copy, select all the text below and copy it manually.</p>
+      <textarea id="copy-output" class="edit-output" readonly></textarea>
+    </div>
+  </div>
+
+  <script src="data.js?v=3"></script>
+  <script src="edit.js?v=1"></script>
+</body>
+</html>

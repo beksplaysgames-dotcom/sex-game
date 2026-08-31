@@ -1,13 +1,49 @@
-"die,text"
-"Action,Kiss"
-"Action,Massage"
-"Action,Scratch"
-"Action,Lick"
-"Action,Nibble"
-"Action,Caress"
-"Location,Neck"
-"Location,Ear"
-"Location,Shoulders"
-"Location,Back"
-"Location,Hands"
-"Location,Collarbone"
+die,tier,text
+Action,Easy,Kiss
+Action,Easy,Hug
+Action,Easy,Hold
+Action,Easy,Caress
+Action,Easy,Whisper to
+Action,Easy,Tickle
+Location,Easy,Neck
+Location,Easy,Cheek
+Location,Easy,Hands
+Location,Easy,Ear
+Location,Easy,Hair
+Location,Easy,Shoulders
+Action,Medium,Massage
+Action,Medium,Nibble
+Action,Medium,Trace
+Action,Medium,Squeeze
+Action,Medium,Kiss slowly
+Action,Medium,Scratch
+Location,Medium,Back
+Location,Medium,Collarbone
+Location,Medium,Waist
+Location,Medium,Inner arm
+Location,Medium,Chest
+Location,Medium,Thighs
+Action,Hard,Bite
+Action,Hard,Lick
+Action,Hard,Tease
+Action,Hard,Pin
+Action,Hard,Undress
+Action,Hard,Grind against
+Location,Hard,Lips
+Location,Hard,Inner thighs
+Location,Hard,Hips
+Location,Hard,Lower back
+Location,Hard,Stomach
+Location,Hard,Neck
+Action,Extreme,Blindfold
+Action,Extreme,Restrain
+Action,Extreme,Command
+Action,Extreme,Tease slowly
+Action,Extreme,Take control with
+Action,Extreme,Whisper a fantasy to
+Location,Extreme,Wrists
+Location,Extreme,Behind the ear
+Location,Extreme,Lower back
+Location,Extreme,Wherever they ask
+Location,Extreme,Anywhere but there
+Location,Extreme,Inner thighs

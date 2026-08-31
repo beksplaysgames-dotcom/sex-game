@@ -214,10 +214,41 @@
       </div>
     </section>
 
+    <!-- DICE GAME — STARTING DIFFICULTY -->
+    <section id="screen-dice-start" class="screen">
+      <div class="draw-topbar">
+        <button id="back-dice-start" class="icon-btn" aria-label="Back to game list">←</button>
+        <button class="icon-btn game-settings-btn" aria-label="Game settings" title="Change player names">⚙</button>
+      </div>
+      <p class="eyebrow">dice game</p>
+      <h1 class="title tod-title">Pick your start</h1>
+      <p class="subtitle">You can level up later.</p>
+
+      <div class="tier-grid">
+        <button class="tier-card dice-start-tier" data-tier="Easy">
+          <span class="tier-num">I</span>
+          <span class="tier-name">Easy</span>
+        </button>
+        <button class="tier-card dice-start-tier" data-tier="Medium">
+          <span class="tier-num">II</span>
+          <span class="tier-name">Medium</span>
+        </button>
+        <button class="tier-card dice-start-tier" data-tier="Hard">
+          <span class="tier-num">III</span>
+          <span class="tier-name">Hard</span>
+        </button>
+        <button class="tier-card dice-start-tier" data-tier="Extreme">
+          <span class="tier-num">IV</span>
+          <span class="tier-name">Extreme</span>
+        </button>
+      </div>
+    </section>
+
     <!-- DICE GAME SCREEN -->
     <section id="screen-dice" class="screen">
       <div class="draw-topbar">
         <button id="back-dice" class="icon-btn" aria-label="Back to game list">←</button>
+        <select id="dice-tier-select" class="tier-select" aria-label="Switch difficulty"></select>
         <button class="icon-btn game-settings-btn" aria-label="Game settings" title="Change player names">⚙</button>
       </div>
       <p class="eyebrow" id="dice-turn"></p>
@@ -259,6 +290,18 @@
         <span class="check-mark">✓</span>
         <span class="draw-label">Next turn</span>
       </button>
+
+      <div id="dice-levelup" class="card-frame tod-levelup hidden">
+        <p id="dice-levelup-text" class="position-text"></p>
+        <div class="tod-levelup-actions">
+          <button id="dice-levelup-no" class="draw-btn secondary" type="button">
+            <span class="draw-label">Stay here</span>
+          </button>
+          <button id="dice-levelup-yes" class="draw-btn primary" type="button">
+            <span class="draw-label">Level up</span>
+          </button>
+        </div>
+      </div>
     </section>
 
     <!-- GAME SETTINGS SCREEN -->
@@ -288,6 +331,6 @@
     }
   </script>
   <script src="data.js?v=3"></script>
-  <script src="script.js?v=15"></script>
+  <script src="script.js?v=17"></script>
 </body>
 </html>

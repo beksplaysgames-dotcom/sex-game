@@ -1,0 +1,182 @@
+.edit-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  position: relative;
+  z-index: 2;
+}
+
+.edit-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 2.4rem;
+  margin: 0;
+  color: var(--cream);
+}
+
+.edit-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 28px 0;
+  flex-wrap: wrap;
+}
+.edit-tab {
+  background: var(--card);
+  border: 1px solid rgba(212,175,55,0.3);
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.edit-tab:hover { border-color: var(--gold); color: var(--cream); }
+.edit-tab.active {
+  border-color: var(--crimson);
+  color: var(--cream);
+  background: linear-gradient(135deg, rgba(212,31,60,0.25) 0%, var(--card) 100%);
+}
+
+.edit-panel { display: none; }
+.edit-panel.active { display: block; }
+
+.edit-toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.edit-search {
+  flex: 1;
+  min-width: 160px;
+  background: var(--card);
+  border: 1px solid rgba(212,175,55,0.35);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+}
+.edit-search::placeholder { color: var(--muted); }
+
+.edit-btn {
+  background: var(--card);
+  border: 1px solid rgba(212,175,55,0.4);
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.edit-btn:hover { border-color: var(--gold); }
+.edit-btn.primary {
+  background: linear-gradient(135deg, var(--crimson) 0%, var(--crimson-dark) 100%);
+  border-color: rgba(212,175,55,0.4);
+}
+.edit-btn.primary:hover { box-shadow: 0 6px 20px rgba(212,31,60,0.35); }
+
+.edit-count, .edit-hint {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 14px;
+}
+
+.edit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 8px;
+  padding: 10px;
+  flex-wrap: wrap;
+}
+.edit-row input[type="text"] {
+  background: transparent;
+  border: 1px solid rgba(212,175,55,0.3);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+}
+.edit-row .edit-row-text { flex: 1; min-width: 140px; }
+.edit-row select {
+  background: var(--bg-deep);
+  border: 1px solid rgba(212,175,55,0.3);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+}
+.edit-row-remove {
+  background: transparent;
+  border: 1px solid rgba(212,31,60,0.4);
+  color: var(--crimson);
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.edit-row-remove:hover { background: rgba(212,31,60,0.15); }
+
+.dice-tier-group {
+  margin-bottom: 28px;
+}
+.dice-tier-heading {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--gold);
+  margin: 0 0 10px;
+}
+.dice-die-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 560px) {
+  .dice-die-columns { grid-template-columns: 1fr; }
+}
+.dice-die-label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+.dice-die-count { font-weight: 400; text-transform: none; letter-spacing: 0; }
+.dice-die-count.ok { color: var(--gold); }
+.dice-die-count.bad { color: var(--crimson); }
+
+.edit-output-wrap { margin-top: 24px; }
+.edit-output {
+  width: 100%;
+  min-height: 200px;
+  background: var(--card);
+  border: 1px solid rgba(212,175,55,0.35);
+  border-radius: 8px;
+  padding: 14px;
+  color: var(--cream);
+  font-family: monospace;
+  font-size: 0.8rem;
+  white-space: pre;
+}

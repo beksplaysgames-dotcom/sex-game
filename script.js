@@ -135,7 +135,7 @@
           return;
         }
         if (name === "Dice Game") {
-          enterDiceGame();
+          showScreen("screen-dice-start");
           return;
         }
         const players = loadPlayers();
@@ -392,12 +392,20 @@
 
   // ---- Dice Game ----
   const backDiceBtn = document.getElementById("back-dice");
+  const backDiceStartBtn = document.getElementById("back-dice-start");
+  const diceTierSelect = document.getElementById("dice-tier-select");
   const diceTurnEl = document.getElementById("dice-turn");
   const diceCube1 = document.getElementById("die-cube-1");
   const diceCube2 = document.getElementById("die-cube-2");
   const diceRollBtn = document.getElementById("dice-roll-btn");
   const diceResultEl = document.getElementById("dice-result");
   const diceNextBtn = document.getElementById("dice-next-btn");
+  const diceLevelUpEl = document.getElementById("dice-levelup");
+  const diceLevelUpTextEl = document.getElementById("dice-levelup-text");
+  const diceLevelUpYesBtn = document.getElementById("dice-levelup-yes");
+  const diceLevelUpNoBtn = document.getElementById("dice-levelup-no");
+
+  const DICE_ROUNDS_BEFORE_ASK = 5;
 
   // Order must match the .die-face-* CSS classes, and DIE_FACE_BASE_ROTATION below.
   const DIE_FACE_ORDER = ["front", "back", "right", "left", "top", "bottom"];
@@ -410,39 +418,68 @@
     { x: 90, y: 0 },
   ];
 
+  TIERS.forEach((tier) => {
+    const opt = document.createElement("option");
+    opt.value = tier;
+    opt.textContent = tier;
+    diceTierSelect.appendChild(opt);
+  });
+
   let dicePlayerIndex = 0;
+  let diceTier = "Easy";
+  let diceRoundsAtTier = 0;
   let diceRolling = false;
+  // wordsByTier: { Easy: [...6], Medium: [...6], Hard: [...6], Extreme: [...6] }
   const dieStates = [
-    { words: [], lastFace: -1, x: 0, y: 0 },
-    { words: [], lastFace: -1, x: 0, y: 0 },
+    { wordsByTier: {}, lastFace: -1, x: 0, y: 0 },
+    { wordsByTier: {}, lastFace: -1, x: 0, y: 0 },
   ];
 
   function renderDieFaces(cubeEl, words) {
     DIE_FACE_ORDER.forEach((face, i) => {
       const faceEl = cubeEl.querySelector(`.die-face-${face}`);
-      if (faceEl) faceEl.textContent = words[i] || "";
+      if (faceEl) faceEl.textContent = (words && words[i]) || "";
     });
   }
 
-  fetch("dice-game-data.csv?v=1")
+  // Resets a die's cube to its resting rotation and paints the current tier's
+  // words onto its faces (a roll never rewrites face content, only a tier change does).
+  function diceApplyTier(cubeEl, state) {
+    state.lastFace = -1;
+    state.x = 0;
+    state.y = 0;
+    // Snap instantly rather than animating through the roll transition — a tier
+    // change isn't a roll, so it shouldn't look like one settled on its own.
+    cubeEl.style.transition = "none";
+    cubeEl.style.transform = "rotateX(0deg) rotateY(0deg)";
+    void cubeEl.offsetWidth; // force reflow so the transition:none takes effect first
+    cubeEl.style.transition = "";
+    renderDieFaces(cubeEl, state.wordsByTier[diceTier]);
+  }
+
+  fetch("dice-game-data.csv?v=2")
     .then((res) => res.text())
     .then((text) => {
       const rows = parseCSV(text);
       rows.shift(); // drop header row
-      const actions = [];
-      const locations = [];
-      rows.forEach(([die, prompt]) => {
-        if (!die || !prompt) return;
-        const normalized = die.trim().toLowerCase();
-        if (normalized === "action") actions.push(prompt.trim());
-        else if (normalized === "location") locations.push(prompt.trim());
+      const byTier = { Action: {}, Location: {} };
+      TIERS.forEach((tier) => {
+        byTier.Action[tier] = [];
+        byTier.Location[tier] = [];
       });
-      if (actions.length === 6 && locations.length === 6) {
-        dieStates[0].words = actions;
-        dieStates[1].words = locations;
-        renderDieFaces(diceCube1, actions);
-        renderDieFaces(diceCube2, locations);
-      }
+      rows.forEach(([die, tier, prompt]) => {
+        if (!die || !tier || !prompt) return;
+        const dieLower = die.trim().toLowerCase();
+        const dieKey = dieLower === "action" ? "Action" : dieLower === "location" ? "Location" : null;
+        const tierKey = TIERS.find((t) => t.toLowerCase() === tier.trim().toLowerCase());
+        if (dieKey && tierKey) {
+          byTier[dieKey][tierKey].push(prompt.trim());
+        }
+      });
+      dieStates[0].wordsByTier = byTier.Action;
+      dieStates[1].wordsByTier = byTier.Location;
+      diceApplyTier(diceCube1, dieStates[0]);
+      diceApplyTier(diceCube2, dieStates[1]);
     })
     .catch(() => {
       /* CSV unreachable (e.g. opened via file:// instead of a server) — roll will show a fallback message */
@@ -455,10 +492,20 @@
   }
 
   function diceShowReady() {
-    diceTurnEl.textContent = `${diceCurrentPlayerName()}'s turn`;
+    diceTurnEl.textContent = `${diceCurrentPlayerName()}'s turn · ${diceTier}`;
     diceRollBtn.classList.remove("hidden");
     diceResultEl.classList.add("hidden");
     diceNextBtn.classList.add("hidden");
+    diceLevelUpEl.classList.add("hidden");
+  }
+
+  function diceShowLevelUpAsk() {
+    const nextTier = TIERS[TIERS.indexOf(diceTier) + 1];
+    diceLevelUpTextEl.textContent = `You've done ${DICE_ROUNDS_BEFORE_ASK} rounds of ${diceTier}. Ready to level up to ${nextTier}?`;
+    diceRollBtn.classList.add("hidden");
+    diceResultEl.classList.add("hidden");
+    diceNextBtn.classList.add("hidden");
+    diceLevelUpEl.classList.remove("hidden");
   }
 
   // Rotates one die to a random new face (never repeating the previous one) and
@@ -466,6 +513,7 @@
   // resetting to 0) so the cube always spins forward into its next position, plus
   // a few extra full turns for visual flair.
   function rollOneDie(cubeEl, state) {
+    const words = state.wordsByTier[diceTier];
     let faceIndex;
     do {
       faceIndex = Math.floor(Math.random() * 6);
@@ -480,13 +528,19 @@
     state.x += deltaX + extraX;
     state.y += deltaY + extraY;
     cubeEl.style.transform = `rotateX(${state.x}deg) rotateY(${state.y}deg)`;
-    return state.words[faceIndex];
+    return words[faceIndex];
+  }
+
+  function diceTierReady() {
+    const words1 = dieStates[0].wordsByTier[diceTier];
+    const words2 = dieStates[1].wordsByTier[diceTier];
+    return words1 && words1.length === 6 && words2 && words2.length === 6;
   }
 
   diceRollBtn.addEventListener("click", () => {
     if (diceRolling) return;
-    if (dieStates[0].words.length !== 6 || dieStates[1].words.length !== 6) {
-      diceResultEl.textContent = "Add exactly 6 Action and 6 Location rows to dice-game-data.csv.";
+    if (!diceTierReady()) {
+      diceResultEl.textContent = `Add exactly 6 Action and 6 Location rows for ${diceTier} to dice-game-data.csv.`;
       diceResultEl.classList.remove("hidden");
       return;
     }
@@ -503,6 +557,7 @@
       diceResultEl.classList.remove("hidden");
       diceRollBtn.classList.add("hidden");
       diceNextBtn.classList.remove("hidden");
+      diceRoundsAtTier++;
     };
     diceCube1.addEventListener("transitionend", finish, { once: true });
     // Fallback in case transitionend never fires (e.g. reduced-motion edge cases).
@@ -513,13 +568,50 @@
 
   diceNextBtn.addEventListener("click", () => {
     dicePlayerIndex = dicePlayerIndex === 0 ? 1 : 0;
+    const hasNextTier = TIERS.indexOf(diceTier) < TIERS.length - 1;
+    if (hasNextTier && diceRoundsAtTier >= DICE_ROUNDS_BEFORE_ASK) {
+      diceShowLevelUpAsk();
+    } else {
+      diceShowReady();
+    }
+  });
+
+  diceTierSelect.addEventListener("change", (e) => {
+    diceTier = e.target.value;
+    diceRoundsAtTier = 0;
+    diceApplyTier(diceCube1, dieStates[0]);
+    diceApplyTier(diceCube2, dieStates[1]);
+    diceShowReady();
+  });
+
+  diceLevelUpYesBtn.addEventListener("click", () => {
+    diceTier = TIERS[TIERS.indexOf(diceTier) + 1];
+    diceTierSelect.value = diceTier;
+    diceRoundsAtTier = 0;
+    diceApplyTier(diceCube1, dieStates[0]);
+    diceApplyTier(diceCube2, dieStates[1]);
+    diceShowReady();
+  });
+
+  diceLevelUpNoBtn.addEventListener("click", () => {
+    diceRoundsAtTier = 0;
     diceShowReady();
   });
 
   backDiceBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+  backDiceStartBtn.addEventListener("click", () => showScreen("screen-game-pick"));
 
-  function enterDiceGame() {
+  document.querySelectorAll(".dice-start-tier").forEach((card) => {
+    card.addEventListener("click", () => enterDiceGame(card.dataset.tier));
+  });
+
+  function enterDiceGame(startTier) {
     dicePlayerIndex = 0;
+    diceTier = startTier;
+    diceTierSelect.value = diceTier;
+    diceRoundsAtTier = 0;
+    diceApplyTier(diceCube1, dieStates[0]);
+    diceApplyTier(diceCube2, dieStates[1]);
     showScreen("screen-dice");
     diceShowReady();
   }

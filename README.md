@@ -44,18 +44,19 @@ Add one row per prompt, in any order, as many as you want. In the app, players p
 
 ## Adding your Dice Game words
 
-Open `dice-game-data.csv` — same spreadsheet-friendly format. Two columns:
+Open `dice-game-data.csv` — same spreadsheet-friendly format. Three columns:
 
 ```csv
-die,text
-Action,Kiss
-Location,Neck
+die,tier,text
+Action,Easy,Kiss
+Location,Easy,Neck
 ```
 
 - `die`: must be exactly `Action` or `Location`
+- `tier`: must be exactly `Easy`, `Medium`, `Hard`, or `Extreme` — same difficulty scale as Positions and Truth or Dare
 - `text`: the word shown on that die's face
 
-Unlike Truth or Dare, this one needs **exactly 6 `Action` rows and exactly 6 `Location` rows** — one per face of each physical die, no more, no fewer. Replace the 12 example words with your own; the app assigns them to the two dice's faces automatically.
+This one needs **exactly 6 `Action` rows and exactly 6 `Location` rows per tier** — one per face of each physical die, no more, no fewer, ×4 tiers (48 rows total). Replace the example words with your own; the app repaints both dice's faces automatically whenever the difficulty changes. Like Truth or Dare, players pick a starting difficulty when they open the game, and get asked to level up every 5 rolls.
 
 ## The Gallery page
 
