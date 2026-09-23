@@ -215,6 +215,31 @@ html, body {
 .name-input:focus { outline: none; border-color: var(--crimson); }
 .names-submit { margin-top: 6px; }
 
+.jar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.jar-field-label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--gold);
+}
+.textarea-input {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.5;
+}
+.form-error {
+  margin: -4px 0 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  color: var(--crimson);
+}
+
 .gamepick-change {
   margin: 0;
   font-size: 0.72rem;
@@ -276,6 +301,36 @@ html, body {
   margin: 0 0 10px;
 }
 .tod-next { width: 100%; margin-top: 24px; }
+
+.scratch-wrap {
+  position: relative;
+  width: 100%;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.scratch-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  cursor: grab;
+  touch-action: none;
+  transition: opacity 0.45s ease;
+}
+.scratch-canvas:active { cursor: grabbing; }
+.scratch-canvas.revealed {
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scratch-canvas { transition: none; }
+}
 .tod-levelup {
   width: 100%;
   margin-top: 24px;

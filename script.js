@@ -87,7 +87,7 @@
 
   // ---- Split landing screen: Positions vs Game ----
   const PLAYERS_KEY = "positions_players_v1";
-  const GAMES = ["Truth or Dare", "Dice Game"];
+  const GAMES = ["Truth or Dare", "Dice Game", "Jar Game"];
 
   const splitPositionsBtn = document.getElementById("split-positions");
   const splitGameBtn = document.getElementById("split-game");
@@ -131,6 +131,8 @@
           showScreen("screen-tod-start");
         } else if (name === "Dice Game") {
           showScreen("screen-dice-start");
+        } else if (name === "Jar Game") {
+          enterJarSetup();
         }
       });
       gameListEl.appendChild(btn);
@@ -190,6 +192,8 @@
   const todDareBtn = document.getElementById("tod-dare-btn");
   const todRevealEl = document.getElementById("tod-reveal");
   const todKindEl = document.getElementById("tod-kind");
+  const todScratchWrap = document.getElementById("tod-scratch-wrap");
+  const todScratchCanvas = document.getElementById("tod-scratch-canvas");
   const todTextEl = document.getElementById("tod-text");
   const todNextBtn = document.getElementById("tod-next-btn");
   const todLevelUpEl = document.getElementById("tod-levelup");
@@ -272,6 +276,205 @@
       /* CSV unreachable (e.g. opened via file:// instead of a server) — Truth or Dare falls back to its empty-pool message */
     });
 
+  // ---- Truth or Dare: scratch-card reveal ----
+  const scratchCtx = todScratchCanvas.getContext("2d");
+  const SCRATCH_SAMPLE_W = 32;
+  const SCRATCH_SAMPLE_H = 20;
+  const SCRATCH_REVEAL_THRESHOLD = 0.55;
+  const scratchSampleCanvas = document.createElement("canvas");
+  scratchSampleCanvas.width = SCRATCH_SAMPLE_W;
+  scratchSampleCanvas.height = SCRATCH_SAMPLE_H;
+  const scratchSampleCtx = scratchSampleCanvas.getContext("2d");
+
+  let scratchDisplayW = 0;
+  let scratchDisplayH = 0;
+  let scratchActive = false;
+  let scratchRevealed = false;
+  let scratchDrawing = false;
+  let scratchLastPoint = null;
+  let scratchSampleQueued = false;
+
+  function scratchThemeColors() {
+    const styles = getComputedStyle(document.documentElement);
+    return {
+      gold: styles.getPropertyValue("--gold").trim() || "#D4AF37",
+      crimson: styles.getPropertyValue("--crimson").trim() || "#D41F3C",
+      crimsonDark: styles.getPropertyValue("--crimson-dark").trim() || "#7A0F22",
+    };
+  }
+
+  function paintScratchLayer(ctx, w, h) {
+    const { gold, crimson, crimsonDark } = scratchThemeColors();
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, crimsonDark);
+    grad.addColorStop(1, crimson);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = gold;
+    ctx.font = `${Math.max(10, Math.round(h * 0.16))}px Inter, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const cols = 6;
+    const rows = 4;
+    for (let r = 0; r <= rows; r++) {
+      for (let c = 0; c <= cols; c++) {
+        const x = (w / cols) * c + (r % 2 === 0 ? 0 : w / cols / 2);
+        const y = (h / rows) * r;
+        ctx.fillText("✦", x, y);
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = gold;
+    ctx.font = `800 ${Math.max(12, Math.round(h * 0.15))}px Inter, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.45)";
+    ctx.shadowBlur = 4;
+    ctx.fillText("SCRATCH TO REVEAL", w / 2, h / 2);
+    ctx.restore();
+  }
+
+  function initScratchCard() {
+    const rect = todScratchWrap.getBoundingClientRect();
+    scratchDisplayW = Math.max(1, Math.round(rect.width));
+    scratchDisplayH = Math.max(1, Math.round(rect.height));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    todScratchCanvas.width = scratchDisplayW * dpr;
+    todScratchCanvas.height = scratchDisplayH * dpr;
+    todScratchCanvas.style.width = scratchDisplayW + "px";
+    todScratchCanvas.style.height = scratchDisplayH + "px";
+    scratchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    scratchCtx.globalCompositeOperation = "source-over";
+    paintScratchLayer(scratchCtx, scratchDisplayW, scratchDisplayH);
+
+    scratchSampleCtx.setTransform(1, 0, 0, 1, 0, 0);
+    scratchSampleCtx.globalCompositeOperation = "source-over";
+    scratchSampleCtx.fillStyle = "#000";
+    scratchSampleCtx.fillRect(0, 0, SCRATCH_SAMPLE_W, SCRATCH_SAMPLE_H);
+
+    // Snap opacity back to 1 instantly rather than animating — the transition
+    // exists for the reveal fade-out, not for a fresh card fading itself in.
+    todScratchCanvas.style.transition = "none";
+    todScratchCanvas.classList.remove("revealed");
+    void todScratchCanvas.offsetWidth; // force reflow so transition:none takes effect first
+    todScratchCanvas.style.transition = "";
+    todScratchCanvas.style.pointerEvents = "";
+    scratchActive = true;
+    scratchRevealed = false;
+    scratchLastPoint = null;
+  }
+
+  function scratchErase(x, y) {
+    scratchCtx.globalCompositeOperation = "destination-out";
+    scratchCtx.beginPath();
+    scratchCtx.arc(x, y, 22, 0, Math.PI * 2);
+    scratchCtx.fill();
+
+    const sx = (x / scratchDisplayW) * SCRATCH_SAMPLE_W;
+    const sy = (y / scratchDisplayH) * SCRATCH_SAMPLE_H;
+    scratchSampleCtx.globalCompositeOperation = "destination-out";
+    scratchSampleCtx.beginPath();
+    scratchSampleCtx.arc(sx, sy, 3, 0, Math.PI * 2);
+    scratchSampleCtx.fill();
+  }
+
+  function scratchStrokeTo(x, y) {
+    if (scratchLastPoint) {
+      const dx = x - scratchLastPoint.x;
+      const dy = y - scratchLastPoint.y;
+      const dist = Math.hypot(dx, dy);
+      const steps = Math.max(1, Math.floor(dist / 8));
+      for (let i = 1; i <= steps; i++) {
+        scratchErase(scratchLastPoint.x + (dx * i) / steps, scratchLastPoint.y + (dy * i) / steps);
+      }
+    } else {
+      scratchErase(x, y);
+    }
+    scratchLastPoint = { x, y };
+  }
+
+  function queueScratchSample() {
+    if (scratchSampleQueued) return;
+    scratchSampleQueued = true;
+    requestAnimationFrame(() => {
+      scratchSampleQueued = false;
+      checkScratchProgress();
+    });
+  }
+
+  function checkScratchProgress() {
+    if (!scratchActive || scratchRevealed) return;
+    const data = scratchSampleCtx.getImageData(0, 0, SCRATCH_SAMPLE_W, SCRATCH_SAMPLE_H).data;
+    let cleared = 0;
+    const total = SCRATCH_SAMPLE_W * SCRATCH_SAMPLE_H;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] < 128) cleared++;
+    }
+    if (cleared / total >= SCRATCH_REVEAL_THRESHOLD) {
+      revealScratchCard();
+    }
+  }
+
+  function revealScratchCard() {
+    if (scratchRevealed) return;
+    scratchRevealed = true;
+    scratchActive = false;
+    todScratchCanvas.classList.add("revealed");
+    todScratchCanvas.style.pointerEvents = "none";
+    setTimeout(() => {
+      todNextBtn.classList.remove("hidden");
+    }, 350);
+  }
+
+  function skipScratchCard() {
+    scratchActive = false;
+    scratchRevealed = true;
+    todScratchCanvas.classList.add("revealed");
+    todScratchCanvas.style.pointerEvents = "none";
+  }
+
+  function scratchPointFromEvent(e) {
+    const rect = todScratchCanvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  todScratchCanvas.addEventListener("pointerdown", (e) => {
+    if (!scratchActive || scratchRevealed) return;
+    e.preventDefault();
+    scratchDrawing = true;
+    scratchLastPoint = null;
+    todScratchCanvas.setPointerCapture(e.pointerId);
+    const p = scratchPointFromEvent(e);
+    scratchStrokeTo(p.x, p.y);
+    queueScratchSample();
+  });
+  todScratchCanvas.addEventListener("pointermove", (e) => {
+    if (!scratchDrawing || !scratchActive || scratchRevealed) return;
+    const p = scratchPointFromEvent(e);
+    scratchStrokeTo(p.x, p.y);
+    queueScratchSample();
+  });
+  function stopScratchDrawing() {
+    scratchDrawing = false;
+    scratchLastPoint = null;
+  }
+  todScratchCanvas.addEventListener("pointerup", stopScratchDrawing);
+  todScratchCanvas.addEventListener("pointercancel", stopScratchDrawing);
+  todScratchCanvas.addEventListener("pointerleave", stopScratchDrawing);
+
+  window.addEventListener("resize", () => {
+    const screenTod = document.getElementById("screen-tod");
+    if (!screenTod.classList.contains("active")) return;
+    if (!scratchActive || scratchRevealed) return;
+    if (todRevealEl.classList.contains("hidden")) return;
+    initScratchCard();
+  });
+
   function todCurrentPlayerName() {
     const players = loadPlayers();
     if (!players) return "Player " + (todPlayerIndex + 1);
@@ -298,31 +501,36 @@
   function todDraw(kind) {
     const source = kind === "Truth" ? TRUTHS : DARES;
     const pool = source.filter((entry) => entry.tier === todTier);
-    if (pool.length === 0) {
-      todKindEl.textContent = kind;
-      todTextEl.textContent = `No ${todTier} ${kind.toLowerCase()} prompts yet — add some to truth-or-dare-data.csv.`;
-    } else {
-      let idx;
-      if (pool.length === 1) {
-        idx = 0;
-      } else {
-        const lastIdx = kind === "Truth" ? todLastTruthIndex : todLastDareIndex;
-        do {
-          idx = Math.floor(Math.random() * pool.length);
-        } while (idx === lastIdx);
-      }
-      if (kind === "Truth") {
-        todLastTruthIndex = idx;
-      } else {
-        todLastDareIndex = idx;
-      }
-      todKindEl.textContent = kind;
-      todTextEl.textContent = pool[idx].text;
-    }
     todRoundsAtTier++;
     todChoiceEl.classList.add("hidden");
     todRevealEl.classList.remove("hidden");
-    todNextBtn.classList.remove("hidden");
+    todNextBtn.classList.add("hidden");
+
+    if (pool.length === 0) {
+      todKindEl.textContent = kind;
+      todTextEl.textContent = `No ${todTier} ${kind.toLowerCase()} prompts yet — add some to truth-or-dare-data.csv.`;
+      skipScratchCard();
+      todNextBtn.classList.remove("hidden");
+      return;
+    }
+
+    let idx;
+    if (pool.length === 1) {
+      idx = 0;
+    } else {
+      const lastIdx = kind === "Truth" ? todLastTruthIndex : todLastDareIndex;
+      do {
+        idx = Math.floor(Math.random() * pool.length);
+      } while (idx === lastIdx);
+    }
+    if (kind === "Truth") {
+      todLastTruthIndex = idx;
+    } else {
+      todLastDareIndex = idx;
+    }
+    todKindEl.textContent = kind;
+    todTextEl.textContent = pool[idx].text;
+    initScratchCard();
   }
 
   function enterTruthOrDare(startTier) {
@@ -604,6 +812,122 @@
     showScreen("screen-dice");
     diceShowReady();
   }
+
+  // ---- Jar Game ----
+  const backJarSetupBtn = document.getElementById("back-jar-setup");
+  const backJarBtn = document.getElementById("back-jar");
+  const jarPlayer1Label = document.getElementById("jar-player1-label");
+  const jarPlayer2Label = document.getElementById("jar-player2-label");
+  const jarPlayer1Dares = document.getElementById("jar-player1-dares");
+  const jarPlayer2Dares = document.getElementById("jar-player2-dares");
+  const jarSetupForm = document.getElementById("jar-setup-form");
+  const jarSetupError = document.getElementById("jar-setup-error");
+  const jarTurnEl = document.getElementById("jar-turn");
+  const jarRemainingEl = document.getElementById("jar-remaining");
+  const jarDrawBtn = document.getElementById("jar-draw-btn");
+  const jarRevealEl = document.getElementById("jar-reveal");
+  const jarDareTextEl = document.getElementById("jar-dare-text");
+  const jarDoneBtn = document.getElementById("jar-done-btn");
+  const jarCompleteEl = document.getElementById("jar-complete");
+  const jarCompleteTextEl = document.getElementById("jar-complete-text");
+  const jarCompleteAgainBtn = document.getElementById("jar-complete-again");
+  const jarCompleteBackBtn = document.getElementById("jar-complete-back");
+
+  const JAR_MIN_DARES = 5;
+  const JAR_MAX_DARES = 10;
+
+  let jarPlayerIndex = 0;
+  let jarDares = [];
+  let jarTotal = 0;
+
+  function jarCurrentPlayerName() {
+    const players = loadPlayers();
+    if (!players) return "Player " + (jarPlayerIndex + 1);
+    return jarPlayerIndex === 0 ? players.player1 : players.player2;
+  }
+
+  function parseDareLines(raw) {
+    return raw
+      .split(/\r\n|\n|\r/)
+      .map((line) => line.trim())
+      .filter((line) => line !== "");
+  }
+
+  function enterJarSetup() {
+    const players = loadPlayers();
+    jarPlayer1Label.textContent = `${players ? players.player1 : "Player 1"}'s dares`;
+    jarPlayer2Label.textContent = `${players ? players.player2 : "Player 2"}'s dares`;
+    jarPlayer1Dares.value = "";
+    jarPlayer2Dares.value = "";
+    jarSetupError.classList.add("hidden");
+    showScreen("screen-jar-setup");
+  }
+
+  jarSetupForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const dares1 = parseDareLines(jarPlayer1Dares.value);
+    const dares2 = parseDareLines(jarPlayer2Dares.value);
+    if (
+      dares1.length < JAR_MIN_DARES ||
+      dares1.length > JAR_MAX_DARES ||
+      dares2.length < JAR_MIN_DARES ||
+      dares2.length > JAR_MAX_DARES
+    ) {
+      jarSetupError.textContent = `Each of you needs ${JAR_MIN_DARES} to ${JAR_MAX_DARES} dares, one per line.`;
+      jarSetupError.classList.remove("hidden");
+      return;
+    }
+    jarSetupError.classList.add("hidden");
+    jarDares = [...dares1, ...dares2];
+    jarTotal = jarDares.length;
+    jarPlayerIndex = 0;
+    showScreen("screen-jar");
+    jarShowDrawReady();
+  });
+
+  function jarShowDrawReady() {
+    jarTurnEl.textContent = `${jarCurrentPlayerName()}'s turn`;
+    jarRemainingEl.textContent = `${jarDares.length} / ${jarTotal} dares left`;
+    jarDrawBtn.classList.remove("hidden");
+    jarRevealEl.classList.add("hidden");
+    jarDoneBtn.classList.add("hidden");
+    jarCompleteEl.classList.add("hidden");
+  }
+
+  function jarShowComplete() {
+    jarCompleteTextEl.textContent = `The jar's empty! You got through all ${jarTotal} dares.`;
+    jarDrawBtn.classList.add("hidden");
+    jarRevealEl.classList.add("hidden");
+    jarDoneBtn.classList.add("hidden");
+    jarCompleteEl.classList.remove("hidden");
+  }
+
+  jarDrawBtn.addEventListener("click", () => {
+    if (jarDares.length === 0) return;
+    spinCompassOn(jarDrawBtn);
+    const idx = Math.floor(Math.random() * jarDares.length);
+    const [dare] = jarDares.splice(idx, 1);
+    jarDareTextEl.textContent = dare;
+    jarRemainingEl.textContent = `${jarDares.length} / ${jarTotal} dares left`;
+    jarDrawBtn.classList.add("hidden");
+    jarRevealEl.classList.remove("hidden");
+    jarDoneBtn.classList.remove("hidden");
+  });
+
+  jarDoneBtn.addEventListener("click", () => {
+    jarPlayerIndex = jarPlayerIndex === 0 ? 1 : 0;
+    if (jarDares.length === 0) {
+      jarShowComplete();
+    } else {
+      jarShowDrawReady();
+    }
+  });
+
+  jarCompleteAgainBtn.addEventListener("click", () => enterJarSetup());
+  jarCompleteBackBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+
+  backJarSetupBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+  backJarBtn.addEventListener("click", () => showScreen("screen-game-pick"));
 
   // ---- Draw screen logic ----
   function poolFor(tier) {

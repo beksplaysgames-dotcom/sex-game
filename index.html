@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#0B0507" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=17" />
+<link rel="stylesheet" href="style.css?v=20" />
 </head>
 <body>
 
@@ -182,7 +182,10 @@
 
       <div id="tod-reveal" class="card-frame tod-reveal hidden">
         <p id="tod-kind" class="tod-kind"></p>
-        <p id="tod-text" class="position-text"></p>
+        <div id="tod-scratch-wrap" class="scratch-wrap">
+          <p id="tod-text" class="position-text"></p>
+          <canvas id="tod-scratch-canvas" class="scratch-canvas"></canvas>
+        </div>
       </div>
 
       <button id="tod-next-btn" class="draw-btn primary tod-next hidden" type="button">
@@ -293,6 +296,70 @@
       </div>
     </section>
 
+    <!-- JAR GAME — SETUP SCREEN -->
+    <section id="screen-jar-setup" class="screen">
+      <div class="draw-topbar">
+        <button id="back-jar-setup" class="icon-btn" aria-label="Back to game list">←</button>
+      </div>
+      <p class="eyebrow">jar game</p>
+      <h1 class="title tod-title">Fill the jar</h1>
+      <p class="subtitle">Each of you writes 5–10 dares. They'll be drawn at random until the jar's empty.</p>
+
+      <form id="jar-setup-form" class="names-form">
+        <div class="jar-field">
+          <label id="jar-player1-label" class="jar-field-label" for="jar-player1-dares">Player 1's dares</label>
+          <textarea id="jar-player1-dares" class="name-input textarea-input" rows="5" placeholder="One dare per line&#10;5 to 10 dares" required></textarea>
+        </div>
+        <div class="jar-field">
+          <label id="jar-player2-label" class="jar-field-label" for="jar-player2-dares">Player 2's dares</label>
+          <textarea id="jar-player2-dares" class="name-input textarea-input" rows="5" placeholder="One dare per line&#10;5 to 10 dares" required></textarea>
+        </div>
+        <p id="jar-setup-error" class="form-error hidden"></p>
+        <button type="submit" class="draw-btn primary names-submit">
+          <span class="check-mark">✓</span>
+          <span class="draw-label">Shake the jar</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- JAR GAME — PLAY SCREEN -->
+    <section id="screen-jar" class="screen">
+      <div class="draw-topbar">
+        <button id="back-jar" class="icon-btn" aria-label="Back to game list">←</button>
+      </div>
+      <p class="eyebrow" id="jar-turn"></p>
+      <h1 class="title tod-title">Jar Game</h1>
+      <p class="subtitle" id="jar-remaining"></p>
+
+      <button id="jar-draw-btn" class="draw-btn primary" type="button">
+        <span class="compass">
+          <span class="needle"></span>
+        </span>
+        <span class="draw-label">Draw</span>
+      </button>
+
+      <div id="jar-reveal" class="card-frame tod-reveal hidden">
+        <p id="jar-dare-text" class="position-text"></p>
+      </div>
+
+      <button id="jar-done-btn" class="draw-btn primary tod-next hidden" type="button">
+        <span class="check-mark">✓</span>
+        <span class="draw-label">Done</span>
+      </button>
+
+      <div id="jar-complete" class="card-frame tod-levelup hidden">
+        <p id="jar-complete-text" class="position-text"></p>
+        <div class="tod-levelup-actions">
+          <button id="jar-complete-again" class="draw-btn secondary" type="button">
+            <span class="draw-label">Fill it again</span>
+          </button>
+          <button id="jar-complete-back" class="draw-btn primary" type="button">
+            <span class="draw-label">Back to games</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- GAME SETTINGS SCREEN -->
     <section id="screen-game-settings" class="screen">
       <div class="draw-topbar">
@@ -320,6 +387,6 @@
     }
   </script>
   <script src="data.js?v=3"></script>
-  <script src="script.js?v=18"></script>
+  <script src="script.js?v=21"></script>
 </body>
 </html>
