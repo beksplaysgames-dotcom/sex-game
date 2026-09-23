@@ -60,7 +60,7 @@
 
   // ---- Split landing screen: Positions vs Game ----
   const PLAYERS_KEY = "positions_players_v1";
-  const GAMES = ["Truth or Dare", "Dice Game", "Jar Game", "Tease · Lick · Kiss · Bite"];
+  const GAMES = ["Truth or Dare", "Dice Game", "Jar Game", "Tease · Lick · Kiss · Bite", "Card Match"];
 
   const splitPositionsBtn = document.getElementById("split-positions");
   const splitGameBtn = document.getElementById("split-game");
@@ -108,6 +108,8 @@
           enterJarSetup();
         } else if (name === "Tease · Lick · Kiss · Bite") {
           showScreen("screen-tlkb-start");
+        } else if (name === "Card Match") {
+          showScreen("screen-cardmatch-start");
         }
       });
       gameListEl.appendChild(btn);
@@ -1153,6 +1155,183 @@
     showScreen("screen-tlkb");
     tlkbShowReady();
   }
+
+  // ---- Card Match ----
+  const backCardmatchStartBtn = document.getElementById("back-cardmatch-start");
+  const backCardmatchSortBtn = document.getElementById("back-cardmatch-sort");
+  const backCardmatchHandoffBtn = document.getElementById("back-cardmatch-handoff");
+  const backCardmatchResultsBtn = document.getElementById("back-cardmatch-results");
+  const cardmatchSortTurnEl = document.getElementById("cardmatch-sort-turn");
+  const cardmatchSortProgressEl = document.getElementById("cardmatch-sort-progress");
+  const cardmatchSortTextEl = document.getElementById("cardmatch-sort-text");
+  const cardmatchNoBtn = document.getElementById("cardmatch-no-btn");
+  const cardmatchMaybeBtn = document.getElementById("cardmatch-maybe-btn");
+  const cardmatchYesBtn = document.getElementById("cardmatch-yes-btn");
+  const cardmatchHandoffTextEl = document.getElementById("cardmatch-handoff-text");
+  const cardmatchHandoffReadyBtn = document.getElementById("cardmatch-handoff-ready");
+  const cardmatchResultsSummaryEl = document.getElementById("cardmatch-results-summary");
+  const cardmatchPerfectListEl = document.getElementById("cardmatch-perfect-list");
+  const cardmatchExploreListEl = document.getElementById("cardmatch-explore-list");
+  const cardmatchPlayAgainBtn = document.getElementById("cardmatch-play-again");
+  const cardmatchBackGamesBtn = document.getElementById("cardmatch-back-games");
+
+  let cardmatchByTier = {};
+  let cmTier = "Easy";
+  let cmDeck = [];
+  let cmIndex = 0;
+  let cmPhase = 1;
+  let cmAnswers1 = [];
+  let cmAnswers2 = [];
+
+  function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  fetch("cardmatch-data.csv?v=1")
+    .then((res) => res.text())
+    .then((text) => {
+      const rows = parseCSV(text);
+      rows.shift(); // drop header row
+      const byTier = {};
+      TIERS.forEach((tier) => { byTier[tier] = []; });
+      rows.forEach(([tier, prompt]) => {
+        if (!tier || !prompt) return;
+        const tierKey = TIERS.find((t) => t.toLowerCase() === tier.trim().toLowerCase());
+        if (tierKey) byTier[tierKey].push(prompt.trim());
+      });
+      cardmatchByTier = byTier;
+    })
+    .catch(() => {
+      /* CSV unreachable (e.g. opened via file:// instead of a server) — sorting will show a fallback message */
+    });
+
+  function cmPlayerName(phase) {
+    const players = loadPlayers();
+    if (!players) return "Player " + phase;
+    return phase === 1 ? players.player1 : players.player2;
+  }
+
+  function cmShowCard() {
+    cardmatchSortTurnEl.textContent = `${cmPlayerName(cmPhase)}'s turn · private`;
+    cardmatchSortProgressEl.textContent = `${cmIndex + 1} / ${cmDeck.length} cards`;
+    cardmatchSortTextEl.textContent = cmDeck[cmIndex];
+  }
+
+  function cmShowHandoff() {
+    cardmatchHandoffTextEl.textContent = `${cmPlayerName(1)} is done. Hand the phone to ${cmPlayerName(2)}.`;
+    showScreen("screen-cardmatch-handoff");
+  }
+
+  function cmShowResults() {
+    const perfect = [];
+    const explore = [];
+    cmDeck.forEach((text, i) => {
+      const a1 = cmAnswers1[i];
+      const a2 = cmAnswers2[i];
+      if (a1 === "yes" && a2 === "yes") {
+        perfect.push(text);
+      } else if (a1 !== "no" && a2 !== "no") {
+        explore.push(text);
+      }
+    });
+
+    cardmatchResultsSummaryEl.textContent = `${perfect.length} perfect match${perfect.length === 1 ? "" : "es"} · ${explore.length} worth exploring`;
+
+    cardmatchPerfectListEl.innerHTML = "";
+    if (perfect.length === 0) {
+      const p = document.createElement("p");
+      p.className = "match-empty";
+      p.textContent = "No perfect matches this time.";
+      cardmatchPerfectListEl.appendChild(p);
+    } else {
+      perfect.forEach((text) => {
+        const item = document.createElement("div");
+        item.className = "match-item";
+        item.textContent = text;
+        cardmatchPerfectListEl.appendChild(item);
+      });
+    }
+
+    cardmatchExploreListEl.innerHTML = "";
+    if (explore.length === 0) {
+      const p = document.createElement("p");
+      p.className = "match-empty";
+      p.textContent = "Nothing here yet.";
+      cardmatchExploreListEl.appendChild(p);
+    } else {
+      explore.forEach((text) => {
+        const item = document.createElement("div");
+        item.className = "match-item";
+        item.textContent = text;
+        cardmatchExploreListEl.appendChild(item);
+      });
+    }
+
+    showScreen("screen-cardmatch-results");
+  }
+
+  function cmAnswer(choice) {
+    const answers = cmPhase === 1 ? cmAnswers1 : cmAnswers2;
+    answers.push(choice);
+    cmIndex++;
+    if (cmIndex >= cmDeck.length) {
+      if (cmPhase === 1) {
+        cmShowHandoff();
+      } else {
+        cmShowResults();
+      }
+    } else {
+      cmShowCard();
+    }
+  }
+
+  cardmatchNoBtn.addEventListener("click", () => cmAnswer("no"));
+  cardmatchMaybeBtn.addEventListener("click", () => cmAnswer("maybe"));
+  cardmatchYesBtn.addEventListener("click", () => cmAnswer("yes"));
+
+  function startCardMatch(tier) {
+    const pool = cardmatchByTier[tier];
+    if (!pool || pool.length === 0) {
+      cmDeck = [];
+      cardmatchSortTurnEl.textContent = "";
+      cardmatchSortProgressEl.textContent = "";
+      cardmatchSortTextEl.textContent = `No ${tier} cards yet — add some to cardmatch-data.csv.`;
+      showScreen("screen-cardmatch-sort");
+      return;
+    }
+    cmTier = tier;
+    cmDeck = shuffleArray(pool);
+    cmIndex = 0;
+    cmPhase = 1;
+    cmAnswers1 = [];
+    cmAnswers2 = [];
+    showScreen("screen-cardmatch-sort");
+    cmShowCard();
+  }
+
+  document.querySelectorAll(".cardmatch-start-tier").forEach((card) => {
+    card.addEventListener("click", () => startCardMatch(card.dataset.tier));
+  });
+
+  cardmatchHandoffReadyBtn.addEventListener("click", () => {
+    cmPhase = 2;
+    cmIndex = 0;
+    showScreen("screen-cardmatch-sort");
+    cmShowCard();
+  });
+
+  backCardmatchStartBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+  backCardmatchSortBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+  backCardmatchHandoffBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+  backCardmatchResultsBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+
+  cardmatchPlayAgainBtn.addEventListener("click", () => showScreen("screen-cardmatch-start"));
+  cardmatchBackGamesBtn.addEventListener("click", () => showScreen("screen-game-pick"));
 
   // ---- Draw screen logic ----
   function poolFor(tier) {

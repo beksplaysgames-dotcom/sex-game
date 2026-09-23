@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#0A0014" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=24" />
+<link rel="stylesheet" href="style.css?v=25" />
 </head>
 <body>
 
@@ -480,6 +480,105 @@
       </div>
     </section>
 
+    <!-- CARD MATCH — STARTING DIFFICULTY -->
+    <section id="screen-cardmatch-start" class="screen">
+      <div class="draw-topbar">
+        <button id="back-cardmatch-start" class="icon-btn" aria-label="Back to game list">←</button>
+        <button class="icon-btn game-settings-btn" aria-label="Game settings" title="Change player names">⚙</button>
+      </div>
+      <p class="eyebrow">card match</p>
+      <h1 class="title tod-title">Pick a pack</h1>
+      <p class="subtitle">You'll each sort the same deck, privately.</p>
+
+      <div class="tier-grid">
+        <button class="tier-card cardmatch-start-tier" data-tier="Easy">
+          <span class="tier-num">I</span>
+          <span class="tier-name">Easy</span>
+        </button>
+        <button class="tier-card cardmatch-start-tier" data-tier="Medium">
+          <span class="tier-num">II</span>
+          <span class="tier-name">Medium</span>
+        </button>
+        <button class="tier-card cardmatch-start-tier" data-tier="Hard">
+          <span class="tier-num">III</span>
+          <span class="tier-name">Hard</span>
+        </button>
+        <button class="tier-card cardmatch-start-tier" data-tier="Extreme">
+          <span class="tier-num">IV</span>
+          <span class="tier-name">Extreme</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- CARD MATCH — PRIVATE SORTING SCREEN (used for both players) -->
+    <section id="screen-cardmatch-sort" class="screen">
+      <div class="draw-topbar">
+        <button id="back-cardmatch-sort" class="icon-btn" aria-label="Back to game list">←</button>
+      </div>
+      <p class="eyebrow" id="cardmatch-sort-turn"></p>
+      <h1 class="title tod-title">Card Match</h1>
+      <p class="subtitle" id="cardmatch-sort-progress"></p>
+
+      <div class="card-frame">
+        <p id="cardmatch-sort-text" class="position-text"></p>
+      </div>
+
+      <div class="sort-choice">
+        <button id="cardmatch-no-btn" class="draw-btn secondary" type="button">
+          <span class="draw-label">No</span>
+        </button>
+        <button id="cardmatch-maybe-btn" class="draw-btn maybe" type="button">
+          <span class="draw-label">Maybe</span>
+        </button>
+        <button id="cardmatch-yes-btn" class="draw-btn primary" type="button">
+          <span class="draw-label">Yes</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- CARD MATCH — HANDOFF SCREEN -->
+    <section id="screen-cardmatch-handoff" class="screen">
+      <div class="draw-topbar">
+        <button id="back-cardmatch-handoff" class="icon-btn" aria-label="Back to game list">←</button>
+      </div>
+      <p class="eyebrow">card match</p>
+      <h1 class="title tod-title">Pass the phone</h1>
+      <div class="card-frame">
+        <p id="cardmatch-handoff-text" class="position-text"></p>
+        <button id="cardmatch-handoff-ready" class="draw-btn primary" type="button">
+          <span class="check-mark">✓</span>
+          <span class="draw-label">I'm ready</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- CARD MATCH — RESULTS SCREEN -->
+    <section id="screen-cardmatch-results" class="screen">
+      <div class="draw-topbar">
+        <button id="back-cardmatch-results" class="icon-btn" aria-label="Back to game list">←</button>
+      </div>
+      <p class="eyebrow">card match</p>
+      <h1 class="title tod-title">Your Matches</h1>
+      <p class="subtitle" id="cardmatch-results-summary"></p>
+
+      <div class="match-results-scroll">
+        <p class="match-section-title">Perfect matches</p>
+        <div id="cardmatch-perfect-list" class="match-list"></div>
+
+        <p class="match-section-title">Worth exploring</p>
+        <div id="cardmatch-explore-list" class="match-list"></div>
+      </div>
+
+      <div class="tod-levelup-actions">
+        <button id="cardmatch-play-again" class="draw-btn secondary" type="button">
+          <span class="draw-label">Play again</span>
+        </button>
+        <button id="cardmatch-back-games" class="draw-btn primary" type="button">
+          <span class="draw-label">Back to games</span>
+        </button>
+      </div>
+    </section>
+
     <!-- GAME SETTINGS SCREEN -->
     <section id="screen-game-settings" class="screen">
       <div class="draw-topbar">
@@ -507,6 +606,6 @@
     }
   </script>
   <script src="data.js?v=3"></script>
-  <script src="script.js?v=23"></script>
+  <script src="script.js?v=24"></script>
 </body>
 </html>
