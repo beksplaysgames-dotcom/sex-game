@@ -60,7 +60,7 @@
 
   // ---- Split landing screen: Positions vs Game ----
   const PLAYERS_KEY = "positions_players_v1";
-  const GAMES = ["Truth or Dare", "Dice Game", "Jar Game"];
+  const GAMES = ["Truth or Dare", "Dice Game", "Jar Game", "Tease · Lick · Kiss · Bite"];
 
   const splitPositionsBtn = document.getElementById("split-positions");
   const splitGameBtn = document.getElementById("split-game");
@@ -106,6 +106,8 @@
           showScreen("screen-dice-start");
         } else if (name === "Jar Game") {
           enterJarSetup();
+        } else if (name === "Tease · Lick · Kiss · Bite") {
+          showScreen("screen-tlkb-start");
         }
       });
       gameListEl.appendChild(btn);
@@ -932,6 +934,225 @@
   jarCompleteBackBtn.addEventListener("click", () => showScreen("screen-game-pick"));
 
   backJarBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+
+  // ---- Tease / Lick / Kiss / Bite ----
+  const backTlkbBtn = document.getElementById("back-tlkb");
+  const backTlkbStartBtn = document.getElementById("back-tlkb-start");
+  const tlkbTierSelect = document.getElementById("tlkb-tier-select");
+  const tlkbTurnEl = document.getElementById("tlkb-turn");
+  const tlkbWheelEl = document.getElementById("tlkb-wheel");
+  const tlkbSpinBtn = document.getElementById("tlkb-spin-btn");
+  const tlkbRevealEl = document.getElementById("tlkb-reveal");
+  const tlkbResultTextEl = document.getElementById("tlkb-result-text");
+  const tlkbNextBtn = document.getElementById("tlkb-next-btn");
+  const tlkbLevelUpEl = document.getElementById("tlkb-levelup");
+  const tlkbLevelUpTextEl = document.getElementById("tlkb-levelup-text");
+  const tlkbLevelUpYesBtn = document.getElementById("tlkb-levelup-yes");
+  const tlkbLevelUpNoBtn = document.getElementById("tlkb-levelup-no");
+  const tlkbModal = document.getElementById("tlkb-modal");
+
+  const TLKB_ROUNDS_BEFORE_ASK = 5;
+  const TLKB_SEGMENTS = 8;
+
+  let tlkbPlayerIndex = 0;
+  let tlkbTier = "Easy";
+  let tlkbRoundsAtTier = 0;
+  let tlkbRotation = 0;
+  let tlkbLastIndex = -1;
+  let tlkbSpinning = false;
+  let tlkbBodyPartsByTier = {};
+
+  TIERS.forEach((tier) => {
+    const opt = document.createElement("option");
+    opt.value = tier;
+    opt.textContent = tier;
+    tlkbTierSelect.appendChild(opt);
+  });
+
+  fetch("tlkb-data.csv?v=1")
+    .then((res) => res.text())
+    .then((text) => {
+      const rows = parseCSV(text);
+      rows.shift(); // drop header row
+      const byTier = {};
+      TIERS.forEach((tier) => { byTier[tier] = []; });
+      rows.forEach(([tier, prompt]) => {
+        if (!tier || !prompt) return;
+        const tierKey = TIERS.find((t) => t.toLowerCase() === tier.trim().toLowerCase());
+        if (tierKey) byTier[tierKey].push(prompt.trim());
+      });
+      tlkbBodyPartsByTier = byTier;
+      renderTlkbWheel(tlkbTier);
+    })
+    .catch(() => {
+      /* CSV unreachable (e.g. opened via file:// instead of a server) — spin will show a fallback message */
+    });
+
+  // Rebuilds the wheel's 8 labels for the current tier. The colored slices are a
+  // static CSS conic-gradient on .wheel — only the text overlay changes here.
+  function renderTlkbWheel(tier) {
+    tlkbWheelEl.innerHTML = "";
+    const parts = tlkbBodyPartsByTier[tier] || [];
+    const segAngle = 360 / TLKB_SEGMENTS;
+    for (let i = 0; i < TLKB_SEGMENTS; i++) {
+      const slice = document.createElement("div");
+      slice.className = "wheel-slice";
+      slice.style.transform = `rotate(${i * segAngle + segAngle / 2}deg)`;
+      const label = document.createElement("span");
+      label.className = "wheel-label";
+      label.textContent = parts[i] || "";
+      slice.appendChild(label);
+      tlkbWheelEl.appendChild(slice);
+    }
+  }
+
+  function tlkbTierReady() {
+    const parts = tlkbBodyPartsByTier[tlkbTier];
+    return parts && parts.length === TLKB_SEGMENTS;
+  }
+
+  // Resets the wheel to its resting rotation without animating — used on entry
+  // and tier changes, which aren't spins and shouldn't look like one settling.
+  function tlkbSnapWheel() {
+    tlkbRotation = 0;
+    tlkbLastIndex = -1;
+    tlkbWheelEl.style.transition = "none";
+    tlkbWheelEl.style.transform = "rotate(0deg)";
+    void tlkbWheelEl.offsetWidth; // force reflow so transition:none takes effect first
+    tlkbWheelEl.style.transition = "";
+  }
+
+  function tlkbCurrentPlayerName() {
+    const players = loadPlayers();
+    if (!players) return "Player " + (tlkbPlayerIndex + 1);
+    return tlkbPlayerIndex === 0 ? players.player1 : players.player2;
+  }
+
+  function tlkbShowReady() {
+    tlkbTurnEl.textContent = `${tlkbCurrentPlayerName()}'s turn · ${tlkbTier}`;
+    tlkbSpinBtn.classList.remove("hidden");
+    tlkbSpinBtn.disabled = false;
+    tlkbRevealEl.classList.add("hidden");
+    tlkbNextBtn.classList.add("hidden");
+    tlkbLevelUpEl.classList.add("hidden");
+  }
+
+  function tlkbShowLevelUpAsk() {
+    const nextTier = TIERS[TIERS.indexOf(tlkbTier) + 1];
+    tlkbLevelUpTextEl.textContent = `You've done ${TLKB_ROUNDS_BEFORE_ASK} rounds of ${tlkbTier}. Ready to level up to ${nextTier}?`;
+    tlkbSpinBtn.classList.add("hidden");
+    tlkbRevealEl.classList.add("hidden");
+    tlkbNextBtn.classList.add("hidden");
+    tlkbLevelUpEl.classList.remove("hidden");
+  }
+
+  tlkbSpinBtn.addEventListener("click", () => {
+    if (tlkbSpinning) return;
+    if (!tlkbTierReady()) {
+      tlkbResultTextEl.textContent = `Add exactly ${TLKB_SEGMENTS} entries for ${tlkbTier} to tlkb-data.csv.`;
+      tlkbRevealEl.classList.remove("hidden");
+      return;
+    }
+    tlkbModal.classList.remove("hidden");
+  });
+
+  document.querySelectorAll(".modal-action-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tlkbModal.classList.add("hidden");
+      tlkbSpin(btn.dataset.action);
+    });
+  });
+
+  function tlkbSpin(action) {
+    const parts = tlkbBodyPartsByTier[tlkbTier];
+    tlkbSpinning = true;
+    tlkbSpinBtn.disabled = true;
+    spinCompassOn(tlkbSpinBtn);
+
+    let idx;
+    if (parts.length === 1) {
+      idx = 0;
+    } else {
+      do {
+        idx = Math.floor(Math.random() * parts.length);
+      } while (idx === tlkbLastIndex);
+    }
+    tlkbLastIndex = idx;
+
+    const segAngle = 360 / TLKB_SEGMENTS;
+    const midAngle = idx * segAngle + segAngle / 2;
+    const targetMod = (360 - midAngle) % 360;
+    const currentMod = ((tlkbRotation % 360) + 360) % 360;
+    const delta = (targetMod - currentMod + 360) % 360;
+    const extraSpins = (4 + Math.floor(Math.random() * 3)) * 360;
+    tlkbRotation += delta + extraSpins;
+    tlkbWheelEl.style.transform = `rotate(${tlkbRotation}deg)`;
+
+    const finish = () => {
+      tlkbSpinning = false;
+      tlkbSpinBtn.disabled = false;
+      tlkbSpinBtn.classList.add("hidden");
+      tlkbResultTextEl.textContent = `${action} the ${parts[idx]}`;
+      tlkbRevealEl.classList.remove("hidden");
+      tlkbNextBtn.classList.remove("hidden");
+      tlkbRoundsAtTier++;
+    };
+    tlkbWheelEl.addEventListener("transitionend", finish, { once: true });
+    // Fallback in case transitionend never fires (e.g. reduced-motion edge cases).
+    setTimeout(() => {
+      if (tlkbSpinning) finish();
+    }, 3600);
+  }
+
+  tlkbNextBtn.addEventListener("click", () => {
+    tlkbPlayerIndex = tlkbPlayerIndex === 0 ? 1 : 0;
+    const hasNextTier = TIERS.indexOf(tlkbTier) < TIERS.length - 1;
+    if (hasNextTier && tlkbRoundsAtTier >= TLKB_ROUNDS_BEFORE_ASK) {
+      tlkbShowLevelUpAsk();
+    } else {
+      tlkbShowReady();
+    }
+  });
+
+  tlkbTierSelect.addEventListener("change", (e) => {
+    tlkbTier = e.target.value;
+    tlkbRoundsAtTier = 0;
+    tlkbSnapWheel();
+    renderTlkbWheel(tlkbTier);
+    tlkbShowReady();
+  });
+
+  tlkbLevelUpYesBtn.addEventListener("click", () => {
+    tlkbTier = TIERS[TIERS.indexOf(tlkbTier) + 1];
+    tlkbTierSelect.value = tlkbTier;
+    tlkbRoundsAtTier = 0;
+    tlkbSnapWheel();
+    renderTlkbWheel(tlkbTier);
+    tlkbShowReady();
+  });
+
+  tlkbLevelUpNoBtn.addEventListener("click", () => {
+    tlkbRoundsAtTier = 0;
+    tlkbShowReady();
+  });
+
+  backTlkbBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+  backTlkbStartBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+
+  document.querySelectorAll(".tlkb-start-tier").forEach((card) => {
+    card.addEventListener("click", () => enterTlkb(card.dataset.tier));
+  });
+
+  function enterTlkb(startTier) {
+    tlkbPlayerIndex = 0;
+    tlkbTier = startTier;
+    tlkbTierSelect.value = tlkbTier;
+    tlkbRoundsAtTier = 0;
+    tlkbSnapWheel();
+    renderTlkbWheel(tlkbTier);
+    showScreen("screen-tlkb");
+    tlkbShowReady();
+  }
 
   // ---- Draw screen logic ----
   function poolFor(tier) {

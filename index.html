@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#0A0014" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=22" />
+<link rel="stylesheet" href="style.css?v=24" />
 </head>
 <body>
 
@@ -393,6 +393,93 @@
       </div>
     </section>
 
+    <!-- TEASE/LICK/KISS/BITE — STARTING DIFFICULTY -->
+    <section id="screen-tlkb-start" class="screen">
+      <div class="draw-topbar">
+        <button id="back-tlkb-start" class="icon-btn" aria-label="Back to game list">←</button>
+        <button class="icon-btn game-settings-btn" aria-label="Game settings" title="Change player names">⚙</button>
+      </div>
+      <p class="eyebrow">tease · lick · kiss · bite</p>
+      <h1 class="title tod-title">Pick your start</h1>
+      <p class="subtitle">You can level up later.</p>
+
+      <div class="tier-grid">
+        <button class="tier-card tlkb-start-tier" data-tier="Easy">
+          <span class="tier-num">I</span>
+          <span class="tier-name">Easy</span>
+        </button>
+        <button class="tier-card tlkb-start-tier" data-tier="Medium">
+          <span class="tier-num">II</span>
+          <span class="tier-name">Medium</span>
+        </button>
+        <button class="tier-card tlkb-start-tier" data-tier="Hard">
+          <span class="tier-num">III</span>
+          <span class="tier-name">Hard</span>
+        </button>
+        <button class="tier-card tlkb-start-tier" data-tier="Extreme">
+          <span class="tier-num">IV</span>
+          <span class="tier-name">Extreme</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- TEASE/LICK/KISS/BITE — WHEEL SCREEN -->
+    <section id="screen-tlkb" class="screen">
+      <div class="draw-topbar">
+        <button id="back-tlkb" class="icon-btn" aria-label="Back to game list">←</button>
+        <select id="tlkb-tier-select" class="tier-select" aria-label="Switch difficulty"></select>
+        <button class="icon-btn game-settings-btn" aria-label="Game settings" title="Change player names">⚙</button>
+      </div>
+      <p class="eyebrow" id="tlkb-turn"></p>
+      <h1 class="title tod-title">Tease · Lick · Kiss · Bite</h1>
+
+      <div class="wheel-wrap">
+        <div class="wheel-pointer" aria-hidden="true"></div>
+        <div class="wheel-hub" aria-hidden="true"></div>
+        <div id="tlkb-wheel" class="wheel"></div>
+      </div>
+
+      <button id="tlkb-spin-btn" class="draw-btn primary tlkb-spin" type="button">
+        <span class="compass">
+          <span class="needle"></span>
+        </span>
+        <span class="draw-label">Spin</span>
+      </button>
+
+      <div id="tlkb-reveal" class="card-frame tod-reveal hidden">
+        <p id="tlkb-result-text" class="position-text"></p>
+      </div>
+
+      <button id="tlkb-next-btn" class="draw-btn primary tod-next hidden" type="button">
+        <span class="check-mark">✓</span>
+        <span class="draw-label">Next turn</span>
+      </button>
+
+      <div id="tlkb-levelup" class="card-frame tod-levelup hidden">
+        <p id="tlkb-levelup-text" class="position-text"></p>
+        <div class="tod-levelup-actions">
+          <button id="tlkb-levelup-no" class="draw-btn secondary" type="button">
+            <span class="draw-label">Stay here</span>
+          </button>
+          <button id="tlkb-levelup-yes" class="draw-btn primary" type="button">
+            <span class="draw-label">Level up</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="tlkb-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+          <p class="modal-eyebrow">Choose your move</p>
+          <div class="modal-actions">
+            <button class="modal-action-btn" data-action="Tease" type="button">Tease</button>
+            <button class="modal-action-btn" data-action="Lick" type="button">Lick</button>
+            <button class="modal-action-btn" data-action="Kiss" type="button">Kiss</button>
+            <button class="modal-action-btn" data-action="Bite" type="button">Bite</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- GAME SETTINGS SCREEN -->
     <section id="screen-game-settings" class="screen">
       <div class="draw-topbar">
@@ -420,6 +507,6 @@
     }
   </script>
   <script src="data.js?v=3"></script>
-  <script src="script.js?v=22"></script>
+  <script src="script.js?v=23"></script>
 </body>
 </html>
