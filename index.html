@@ -9,10 +9,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Positions" />
-<meta name="theme-color" content="#0B0507" />
+<meta name="theme-color" content="#0A0014" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20" />
+<link rel="stylesheet" href="style.css?v=22" />
 </head>
 <body>
 
@@ -20,7 +20,6 @@
     <div class="glow glow-a"></div>
     <div class="glow glow-b"></div>
     <div class="vignette"></div>
-    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle neon theme" title="Toggle neon theme">&#10022;</button>
 
     <!-- SPLIT LANDING SCREEN -->
     <section id="screen-split" class="screen active split-screen">
@@ -296,25 +295,59 @@
       </div>
     </section>
 
-    <!-- JAR GAME — SETUP SCREEN -->
-    <section id="screen-jar-setup" class="screen">
+    <!-- JAR GAME — SETUP SCREEN, PLAYER 1 -->
+    <section id="screen-jar-setup-p1" class="screen">
       <div class="draw-topbar">
-        <button id="back-jar-setup" class="icon-btn" aria-label="Back to game list">←</button>
+        <button id="back-jar-setup-p1" class="icon-btn" aria-label="Back to game list">←</button>
       </div>
       <p class="eyebrow">jar game</p>
       <h1 class="title tod-title">Fill the jar</h1>
-      <p class="subtitle">Each of you writes 5–10 dares. They'll be drawn at random until the jar's empty.</p>
+      <p class="subtitle" id="jar-setup-p1-subtitle">Write 5–10 dares, then hand the phone off. Your partner won't see them.</p>
 
-      <form id="jar-setup-form" class="names-form">
+      <form id="jar-setup-p1-form" class="names-form">
         <div class="jar-field">
           <label id="jar-player1-label" class="jar-field-label" for="jar-player1-dares">Player 1's dares</label>
-          <textarea id="jar-player1-dares" class="name-input textarea-input" rows="5" placeholder="One dare per line&#10;5 to 10 dares" required></textarea>
+          <textarea id="jar-player1-dares" class="name-input textarea-input" rows="6" placeholder="One dare per line&#10;5 to 10 dares" required></textarea>
         </div>
+        <p id="jar-setup-p1-error" class="form-error hidden"></p>
+        <button type="submit" class="draw-btn primary names-submit">
+          <span class="check-mark">✓</span>
+          <span class="draw-label">Next</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- JAR GAME — HANDOFF SCREEN -->
+    <section id="screen-jar-handoff" class="screen">
+      <div class="draw-topbar">
+        <button id="back-jar-handoff" class="icon-btn" aria-label="Back">←</button>
+      </div>
+      <p class="eyebrow">jar game</p>
+      <h1 class="title tod-title">Pass the phone</h1>
+      <div class="card-frame">
+        <p id="jar-handoff-text" class="position-text"></p>
+        <button id="jar-handoff-ready" class="draw-btn primary" type="button">
+          <span class="check-mark">✓</span>
+          <span class="draw-label">I'm ready</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- JAR GAME — SETUP SCREEN, PLAYER 2 -->
+    <section id="screen-jar-setup-p2" class="screen">
+      <div class="draw-topbar">
+        <button id="back-jar-setup-p2" class="icon-btn" aria-label="Back">←</button>
+      </div>
+      <p class="eyebrow">jar game</p>
+      <h1 class="title tod-title">Fill the jar</h1>
+      <p class="subtitle">Write 5–10 dares. Your partner won't see them.</p>
+
+      <form id="jar-setup-p2-form" class="names-form">
         <div class="jar-field">
           <label id="jar-player2-label" class="jar-field-label" for="jar-player2-dares">Player 2's dares</label>
-          <textarea id="jar-player2-dares" class="name-input textarea-input" rows="5" placeholder="One dare per line&#10;5 to 10 dares" required></textarea>
+          <textarea id="jar-player2-dares" class="name-input textarea-input" rows="6" placeholder="One dare per line&#10;5 to 10 dares" required></textarea>
         </div>
-        <p id="jar-setup-error" class="form-error hidden"></p>
+        <p id="jar-setup-p2-error" class="form-error hidden"></p>
         <button type="submit" class="draw-btn primary names-submit">
           <span class="check-mark">✓</span>
           <span class="draw-label">Shake the jar</span>
@@ -387,6 +420,6 @@
     }
   </script>
   <script src="data.js?v=3"></script>
-  <script src="script.js?v=21"></script>
+  <script src="script.js?v=22"></script>
 </body>
 </html>

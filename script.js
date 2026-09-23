@@ -1,33 +1,6 @@
 (function () {
   const TIERS = ["Easy", "Medium", "Hard", "Extreme"];
   const STORAGE_KEY = "positions_tried_v1";
-  const THEME_KEY = "positions_theme_v1";
-
-  // ---- Theme toggle (classic / neon), persisted in localStorage ----
-  const themeToggleBtn = document.getElementById("theme-toggle");
-  function applyTheme(theme) {
-    if (theme === "neon") {
-      document.documentElement.setAttribute("data-theme", "neon");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-    }
-  }
-  let currentTheme = "classic";
-  try {
-    currentTheme = localStorage.getItem(THEME_KEY) || "classic";
-  } catch (e) {
-    /* localStorage unavailable, default to classic */
-  }
-  applyTheme(currentTheme);
-  themeToggleBtn.addEventListener("click", () => {
-    currentTheme = currentTheme === "neon" ? "classic" : "neon";
-    applyTheme(currentTheme);
-    try {
-      localStorage.setItem(THEME_KEY, currentTheme);
-    } catch (e) {
-      /* localStorage unavailable, theme choice just won't persist */
-    }
-  });
 
   const tierCards = document.querySelectorAll("#screen-home .tier-card");
   const tierSelect = document.getElementById("tier-select");
@@ -297,9 +270,9 @@
   function scratchThemeColors() {
     const styles = getComputedStyle(document.documentElement);
     return {
-      gold: styles.getPropertyValue("--gold").trim() || "#D4AF37",
-      crimson: styles.getPropertyValue("--crimson").trim() || "#D41F3C",
-      crimsonDark: styles.getPropertyValue("--crimson-dark").trim() || "#7A0F22",
+      gold: styles.getPropertyValue("--gold").trim() || "#9B30FF",
+      crimson: styles.getPropertyValue("--crimson").trim() || "#FF2FD6",
+      crimsonDark: styles.getPropertyValue("--crimson-dark").trim() || "#A6129C",
     };
   }
 
@@ -814,14 +787,21 @@
   }
 
   // ---- Jar Game ----
-  const backJarSetupBtn = document.getElementById("back-jar-setup");
+  const backJarSetupP1Btn = document.getElementById("back-jar-setup-p1");
+  const backJarHandoffBtn = document.getElementById("back-jar-handoff");
+  const backJarSetupP2Btn = document.getElementById("back-jar-setup-p2");
   const backJarBtn = document.getElementById("back-jar");
   const jarPlayer1Label = document.getElementById("jar-player1-label");
   const jarPlayer2Label = document.getElementById("jar-player2-label");
+  const jarSetupP1Subtitle = document.getElementById("jar-setup-p1-subtitle");
   const jarPlayer1Dares = document.getElementById("jar-player1-dares");
   const jarPlayer2Dares = document.getElementById("jar-player2-dares");
-  const jarSetupForm = document.getElementById("jar-setup-form");
-  const jarSetupError = document.getElementById("jar-setup-error");
+  const jarSetupP1Form = document.getElementById("jar-setup-p1-form");
+  const jarSetupP2Form = document.getElementById("jar-setup-p2-form");
+  const jarSetupP1Error = document.getElementById("jar-setup-p1-error");
+  const jarSetupP2Error = document.getElementById("jar-setup-p2-error");
+  const jarHandoffText = document.getElementById("jar-handoff-text");
+  const jarHandoffReadyBtn = document.getElementById("jar-handoff-ready");
   const jarTurnEl = document.getElementById("jar-turn");
   const jarRemainingEl = document.getElementById("jar-remaining");
   const jarDrawBtn = document.getElementById("jar-draw-btn");
@@ -839,11 +819,18 @@
   let jarPlayerIndex = 0;
   let jarDares = [];
   let jarTotal = 0;
+  let jarPlayer1Submitted = [];
 
   function jarCurrentPlayerName() {
     const players = loadPlayers();
     if (!players) return "Player " + (jarPlayerIndex + 1);
     return jarPlayerIndex === 0 ? players.player1 : players.player2;
+  }
+
+  function jarPlayerName(index) {
+    const players = loadPlayers();
+    if (!players) return "Player " + (index + 1);
+    return index === 0 ? players.player1 : players.player2;
   }
 
   function parseDareLines(raw) {
@@ -854,36 +841,54 @@
   }
 
   function enterJarSetup() {
-    const players = loadPlayers();
-    jarPlayer1Label.textContent = `${players ? players.player1 : "Player 1"}'s dares`;
-    jarPlayer2Label.textContent = `${players ? players.player2 : "Player 2"}'s dares`;
+    jarPlayer1Label.textContent = `${jarPlayerName(0)}'s dares`;
+    jarSetupP1Subtitle.textContent = `${jarPlayerName(0)}, write 5–10 dares, then hand the phone off. ${jarPlayerName(1)} won't see them.`;
     jarPlayer1Dares.value = "";
     jarPlayer2Dares.value = "";
-    jarSetupError.classList.add("hidden");
-    showScreen("screen-jar-setup");
+    jarSetupP1Error.classList.add("hidden");
+    jarSetupP2Error.classList.add("hidden");
+    jarPlayer1Submitted = [];
+    showScreen("screen-jar-setup-p1");
   }
 
-  jarSetupForm.addEventListener("submit", (e) => {
+  jarSetupP1Form.addEventListener("submit", (e) => {
     e.preventDefault();
     const dares1 = parseDareLines(jarPlayer1Dares.value);
-    const dares2 = parseDareLines(jarPlayer2Dares.value);
-    if (
-      dares1.length < JAR_MIN_DARES ||
-      dares1.length > JAR_MAX_DARES ||
-      dares2.length < JAR_MIN_DARES ||
-      dares2.length > JAR_MAX_DARES
-    ) {
-      jarSetupError.textContent = `Each of you needs ${JAR_MIN_DARES} to ${JAR_MAX_DARES} dares, one per line.`;
-      jarSetupError.classList.remove("hidden");
+    if (dares1.length < JAR_MIN_DARES || dares1.length > JAR_MAX_DARES) {
+      jarSetupP1Error.textContent = `Write ${JAR_MIN_DARES} to ${JAR_MAX_DARES} dares, one per line.`;
+      jarSetupP1Error.classList.remove("hidden");
       return;
     }
-    jarSetupError.classList.add("hidden");
-    jarDares = [...dares1, ...dares2];
+    jarSetupP1Error.classList.add("hidden");
+    jarPlayer1Submitted = dares1;
+    jarHandoffText.textContent = `${jarPlayerName(0)} is done. Hand the phone to ${jarPlayerName(1)}.`;
+    jarPlayer2Label.textContent = `${jarPlayerName(1)}'s dares`;
+    jarPlayer2Dares.value = "";
+    jarSetupP2Error.classList.add("hidden");
+    showScreen("screen-jar-handoff");
+  });
+
+  jarHandoffReadyBtn.addEventListener("click", () => showScreen("screen-jar-setup-p2"));
+
+  jarSetupP2Form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const dares2 = parseDareLines(jarPlayer2Dares.value);
+    if (dares2.length < JAR_MIN_DARES || dares2.length > JAR_MAX_DARES) {
+      jarSetupP2Error.textContent = `Write ${JAR_MIN_DARES} to ${JAR_MAX_DARES} dares, one per line.`;
+      jarSetupP2Error.classList.remove("hidden");
+      return;
+    }
+    jarSetupP2Error.classList.add("hidden");
+    jarDares = [...jarPlayer1Submitted, ...dares2];
     jarTotal = jarDares.length;
     jarPlayerIndex = 0;
     showScreen("screen-jar");
     jarShowDrawReady();
   });
+
+  backJarSetupP1Btn.addEventListener("click", () => showScreen("screen-game-pick"));
+  backJarHandoffBtn.addEventListener("click", () => enterJarSetup());
+  backJarSetupP2Btn.addEventListener("click", () => showScreen("screen-jar-handoff"));
 
   function jarShowDrawReady() {
     jarTurnEl.textContent = `${jarCurrentPlayerName()}'s turn`;
@@ -926,7 +931,6 @@
   jarCompleteAgainBtn.addEventListener("click", () => enterJarSetup());
   jarCompleteBackBtn.addEventListener("click", () => showScreen("screen-game-pick"));
 
-  backJarSetupBtn.addEventListener("click", () => showScreen("screen-game-pick"));
   backJarBtn.addEventListener("click", () => showScreen("screen-game-pick"));
 
   // ---- Draw screen logic ----
