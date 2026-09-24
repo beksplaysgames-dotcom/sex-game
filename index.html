@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#0A0014" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=25" />
+<link rel="stylesheet" href="style.css?v=26" />
 </head>
 <body>
 
@@ -28,6 +28,9 @@
       </button>
       <button id="split-game" class="split-half split-game">
         <span class="split-label">Game</span>
+      </button>
+      <button id="split-coupons" class="split-coupons">
+        <span class="split-coupons-label">Coupons</span>
       </button>
     </section>
 
@@ -579,6 +582,79 @@
       </div>
     </section>
 
+    <!-- COUPONS — LIST SCREEN -->
+    <section id="screen-coupons" class="screen">
+      <div class="draw-topbar">
+        <button id="back-coupons" class="icon-btn" aria-label="Back to menu">←</button>
+        <button id="coupons-add-btn" class="icon-btn" aria-label="Add a coupon" title="Add a coupon">+</button>
+      </div>
+      <p class="eyebrow">redeem together</p>
+      <h1 class="title tod-title">Coupons</h1>
+
+      <button id="coupons-scan-btn" class="draw-btn primary coupons-scan-btn" type="button">
+        <span class="draw-label">Scan a coupon</span>
+      </button>
+
+      <div id="coupons-list" class="coupon-list"></div>
+      <p id="coupons-empty" class="match-empty hidden">No coupons yet — scan one or add it by hand.</p>
+    </section>
+
+    <!-- COUPONS — ADD SCREEN -->
+    <section id="screen-coupon-add" class="screen">
+      <div class="draw-topbar">
+        <button id="back-coupon-add" class="icon-btn" aria-label="Back to coupons">←</button>
+      </div>
+      <h2 class="section-title">Add a coupon</h2>
+      <p class="subtitle">Match the serial number on the physical coupon.</p>
+      <form id="coupon-add-form" class="names-form">
+        <input id="coupon-add-serial" class="name-input" type="text" placeholder="Serial number" maxlength="40" required />
+        <input id="coupon-add-desc" class="name-input" type="text" placeholder="What does it redeem?" maxlength="120" required />
+        <p id="coupon-add-error" class="form-error hidden"></p>
+        <button type="submit" class="draw-btn primary names-submit">
+          <span class="check-mark">✓</span>
+          <span class="draw-label">Save coupon</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- COUPONS — SCAN SCREEN -->
+    <section id="screen-coupon-scan" class="screen">
+      <div class="draw-topbar">
+        <button id="back-coupon-scan" class="icon-btn" aria-label="Cancel scan">←</button>
+      </div>
+      <p class="eyebrow">coupons</p>
+      <h1 class="title tod-title">Scan a coupon</h1>
+
+      <div class="scan-frame">
+        <video id="coupon-scan-video" class="scan-video" playsinline muted></video>
+        <div class="scan-reticle"></div>
+      </div>
+      <p id="coupon-scan-status" class="subtitle coupon-scan-status"></p>
+      <button id="coupon-scan-add-btn" class="draw-btn primary hidden" type="button">
+        <span class="draw-label">Add this coupon</span>
+      </button>
+    </section>
+
+    <!-- COUPONS — DETAIL SCREEN -->
+    <section id="screen-coupon-detail" class="screen">
+      <div class="draw-topbar">
+        <button id="back-coupon-detail" class="icon-btn" aria-label="Back to coupons">←</button>
+        <button id="coupon-delete-btn" class="icon-btn" aria-label="Delete coupon" title="Delete coupon">×</button>
+      </div>
+      <p class="eyebrow" id="coupon-detail-serial"></p>
+      <h1 class="title tod-title">Coupon</h1>
+
+      <div class="card-frame">
+        <p id="coupon-detail-status" class="coupon-status-badge"></p>
+        <p id="coupon-detail-desc" class="position-text"></p>
+      </div>
+
+      <button id="coupon-toggle-used-btn" class="draw-btn primary" type="button">
+        <span class="check-mark">✓</span>
+        <span class="draw-label" id="coupon-toggle-used-label">Mark as used</span>
+      </button>
+    </section>
+
     <!-- GAME SETTINGS SCREEN -->
     <section id="screen-game-settings" class="screen">
       <div class="draw-topbar">
@@ -606,6 +682,7 @@
     }
   </script>
   <script src="data.js?v=3"></script>
-  <script src="script.js?v=24"></script>
+  <script src="jsQR.min.js?v=1"></script>
+  <script src="script.js?v=25"></script>
 </body>
 </html>

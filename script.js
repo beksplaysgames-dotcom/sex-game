@@ -1333,6 +1333,275 @@
   cardmatchPlayAgainBtn.addEventListener("click", () => showScreen("screen-cardmatch-start"));
   cardmatchBackGamesBtn.addEventListener("click", () => showScreen("screen-game-pick"));
 
+  // ---- Coupons ----
+  const COUPONS_KEY = "positions_coupons_v1";
+  const splitCouponsBtn = document.getElementById("split-coupons");
+  const backCouponsBtn = document.getElementById("back-coupons");
+  const couponsAddBtn = document.getElementById("coupons-add-btn");
+  const couponsScanBtn = document.getElementById("coupons-scan-btn");
+  const couponsListEl = document.getElementById("coupons-list");
+  const couponsEmptyEl = document.getElementById("coupons-empty");
+
+  const backCouponAddBtn = document.getElementById("back-coupon-add");
+  const couponAddForm = document.getElementById("coupon-add-form");
+  const couponAddSerialInput = document.getElementById("coupon-add-serial");
+  const couponAddDescInput = document.getElementById("coupon-add-desc");
+  const couponAddErrorEl = document.getElementById("coupon-add-error");
+
+  const backCouponScanBtn = document.getElementById("back-coupon-scan");
+  const couponScanVideo = document.getElementById("coupon-scan-video");
+  const couponScanStatusEl = document.getElementById("coupon-scan-status");
+  const couponScanAddBtn = document.getElementById("coupon-scan-add-btn");
+
+  const backCouponDetailBtn = document.getElementById("back-coupon-detail");
+  const couponDeleteBtn = document.getElementById("coupon-delete-btn");
+  const couponDetailSerialEl = document.getElementById("coupon-detail-serial");
+  const couponDetailStatusEl = document.getElementById("coupon-detail-status");
+  const couponDetailDescEl = document.getElementById("coupon-detail-desc");
+  const couponToggleUsedBtn = document.getElementById("coupon-toggle-used-btn");
+  const couponToggleUsedLabelEl = document.getElementById("coupon-toggle-used-label");
+
+  let couponReturnFromScan = false;
+  let couponDetailSerial = null; // currently-viewed coupon's serial, for the detail screen
+
+  function loadCoupons() {
+    try {
+      const raw = localStorage.getItem(COUPONS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function saveCoupons(coupons) {
+    try {
+      localStorage.setItem(COUPONS_KEY, JSON.stringify(coupons));
+    } catch (e) {
+      /* localStorage unavailable, coupons just won't persist */
+    }
+  }
+  function findCouponBySerial(serial) {
+    const target = serial.trim().toLowerCase();
+    return loadCoupons().find((c) => c.serial.trim().toLowerCase() === target) || null;
+  }
+
+  function renderCouponsList() {
+    const coupons = loadCoupons();
+    couponsListEl.innerHTML = "";
+    couponsEmptyEl.classList.toggle("hidden", coupons.length > 0);
+    coupons.forEach((coupon) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "coupon-item" + (coupon.used ? " used" : "");
+
+      const text = document.createElement("div");
+      text.className = "coupon-item-text";
+      const serialEl = document.createElement("span");
+      serialEl.className = "coupon-item-serial";
+      serialEl.textContent = coupon.serial;
+      const descEl = document.createElement("span");
+      descEl.className = "coupon-item-desc";
+      descEl.textContent = coupon.desc;
+      text.appendChild(serialEl);
+      text.appendChild(descEl);
+
+      const badge = document.createElement("span");
+      badge.className = "coupon-item-badge";
+      badge.textContent = coupon.used ? "Used" : "Available";
+
+      item.appendChild(text);
+      item.appendChild(badge);
+      item.addEventListener("click", () => showCouponDetail(coupon.serial));
+      couponsListEl.appendChild(item);
+    });
+  }
+
+  splitCouponsBtn.addEventListener("click", () => {
+    showScreen("screen-coupons");
+    renderCouponsList();
+  });
+  backCouponsBtn.addEventListener("click", () => showScreen("screen-split"));
+
+  couponsAddBtn.addEventListener("click", () => {
+    couponAddSerialInput.value = "";
+    couponAddDescInput.value = "";
+    couponAddErrorEl.classList.add("hidden");
+    showScreen("screen-coupon-add");
+  });
+  backCouponAddBtn.addEventListener("click", () => showScreen("screen-coupons"));
+
+  function addCoupon(serial, desc) {
+    const coupons = loadCoupons();
+    coupons.unshift({ serial, desc, used: false, createdAt: Date.now() });
+    saveCoupons(coupons);
+  }
+
+  couponAddForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const serial = couponAddSerialInput.value.trim();
+    const desc = couponAddDescInput.value.trim();
+    if (!serial || !desc) return;
+    if (findCouponBySerial(serial)) {
+      couponAddErrorEl.textContent = "A coupon with that serial number already exists.";
+      couponAddErrorEl.classList.remove("hidden");
+      return;
+    }
+    couponAddErrorEl.classList.add("hidden");
+    addCoupon(serial, desc);
+    if (couponReturnFromScan) {
+      couponReturnFromScan = false;
+      showCouponDetail(serial);
+    } else {
+      showScreen("screen-coupons");
+      renderCouponsList();
+    }
+  });
+
+  // ---- Coupons: detail screen ----
+  function showCouponDetail(serial) {
+    const coupon = findCouponBySerial(serial);
+    if (!coupon) {
+      showScreen("screen-coupons");
+      renderCouponsList();
+      return;
+    }
+    couponDetailSerial = coupon.serial;
+    couponDetailSerialEl.textContent = coupon.serial;
+    couponDetailDescEl.textContent = coupon.desc;
+    couponDetailStatusEl.textContent = coupon.used ? "Used" : "Available";
+    couponDetailStatusEl.classList.toggle("used", coupon.used);
+    couponToggleUsedLabelEl.textContent = coupon.used ? "Mark as not used" : "Mark as used";
+    showScreen("screen-coupon-detail");
+  }
+
+  backCouponDetailBtn.addEventListener("click", () => {
+    showScreen("screen-coupons");
+    renderCouponsList();
+  });
+
+  couponToggleUsedBtn.addEventListener("click", () => {
+    if (!couponDetailSerial) return;
+    const coupons = loadCoupons();
+    const coupon = coupons.find((c) => c.serial === couponDetailSerial);
+    if (!coupon) return;
+    coupon.used = !coupon.used;
+    saveCoupons(coupons);
+    showCouponDetail(coupon.serial);
+  });
+
+  couponDeleteBtn.addEventListener("click", () => {
+    if (!couponDetailSerial) return;
+    const coupons = loadCoupons().filter((c) => c.serial !== couponDetailSerial);
+    saveCoupons(coupons);
+    couponDetailSerial = null;
+    showScreen("screen-coupons");
+    renderCouponsList();
+  });
+
+  // ---- Coupons: QR scan ----
+  let couponScanStream = null;
+  let couponScanRAF = null;
+  const couponScanCanvas = document.createElement("canvas");
+  const couponScanCtx = couponScanCanvas.getContext("2d", { willReadFrequently: true });
+  let couponScanLastRaw = "";
+
+  function stopCouponScan() {
+    if (couponScanRAF) {
+      cancelAnimationFrame(couponScanRAF);
+      couponScanRAF = null;
+    }
+    if (couponScanStream) {
+      couponScanStream.getTracks().forEach((track) => track.stop());
+      couponScanStream = null;
+    }
+    couponScanVideo.srcObject = null;
+  }
+
+  function couponScanTick() {
+    if (!document.getElementById("screen-coupon-scan").classList.contains("active")) {
+      stopCouponScan();
+      return;
+    }
+    if (typeof jsQR !== "function") {
+      couponScanStatusEl.textContent = "QR scanning isn't available in this browser.";
+      stopCouponScan();
+      return;
+    }
+    if (couponScanVideo.readyState >= couponScanVideo.HAVE_ENOUGH_DATA) {
+      const w = couponScanVideo.videoWidth;
+      const h = couponScanVideo.videoHeight;
+      if (w > 0 && h > 0) {
+        couponScanCanvas.width = w;
+        couponScanCanvas.height = h;
+        couponScanCtx.drawImage(couponScanVideo, 0, 0, w, h);
+        const imageData = couponScanCtx.getImageData(0, 0, w, h);
+        const code = jsQR(imageData.data, w, h, { inversionAttempts: "dontInvert" });
+        if (code && code.data) {
+          couponScanLastRaw = code.data;
+          stopCouponScan();
+          handleScannedSerial(code.data);
+          return;
+        }
+      }
+    }
+    couponScanRAF = requestAnimationFrame(couponScanTick);
+  }
+
+  function handleScannedSerial(rawText) {
+    const serial = rawText.trim();
+    const coupon = findCouponBySerial(serial);
+    if (coupon) {
+      couponScanAddBtn.classList.add("hidden");
+      showCouponDetail(coupon.serial);
+      return;
+    }
+    couponScanStatusEl.textContent = `No coupon found for serial "${serial}".`;
+    couponScanAddBtn.classList.remove("hidden");
+  }
+
+  function startCouponScan() {
+    couponScanStatusEl.textContent = "Point your camera at the coupon's QR code.";
+    couponScanAddBtn.classList.add("hidden");
+    couponScanLastRaw = "";
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      couponScanStatusEl.textContent = "Camera access isn't available in this browser.";
+      return;
+    }
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: "environment" } })
+      .catch(() => navigator.mediaDevices.getUserMedia({ video: true }))
+      .then((stream) => {
+        couponScanStream = stream;
+        couponScanVideo.srcObject = stream;
+        return couponScanVideo.play();
+      })
+      .then(() => {
+        couponScanRAF = requestAnimationFrame(couponScanTick);
+      })
+      .catch(() => {
+        couponScanStatusEl.textContent = "Couldn't access the camera. Check that this page has camera permission (and is loaded over https).";
+      });
+  }
+
+  couponsScanBtn.addEventListener("click", () => {
+    showScreen("screen-coupon-scan");
+    startCouponScan();
+  });
+
+  backCouponScanBtn.addEventListener("click", () => {
+    stopCouponScan();
+    showScreen("screen-coupons");
+    renderCouponsList();
+  });
+
+  couponScanAddBtn.addEventListener("click", () => {
+    couponReturnFromScan = true;
+    couponAddSerialInput.value = couponScanLastRaw;
+    couponAddDescInput.value = "";
+    couponAddErrorEl.classList.add("hidden");
+    showScreen("screen-coupon-add");
+  });
+
   // ---- Draw screen logic ----
   function poolFor(tier) {
     return POSITIONS.filter((p) => p.tier === tier);

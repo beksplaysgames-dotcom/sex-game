@@ -137,6 +137,34 @@ html, body {
   text-transform: uppercase;
   text-shadow: 0 0 30px rgba(0,0,0,0.6);
 }
+.split-coupons {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  height: 68px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(0deg, rgba(10,0,20,0.94) 0%, rgba(27,3,56,0.8) 100%);
+  border: none;
+  border-top: 1px solid rgba(255,47,214,0.45);
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+.split-coupons:hover,
+.split-coupons:active { filter: brightness(1.18); }
+.split-coupons-label {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--cream);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 
 /* NAMES / GAME PICK / GAME PLAY SCREENS */
 .section-title {
@@ -528,6 +556,109 @@ p.dice-result { margin-top: 48px; }
   font-size: 0.85rem;
   margin: 0;
 }
+
+/* COUPONS */
+.coupons-scan-btn {
+  width: 100%;
+  margin-top: 22px;
+}
+.coupon-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+  max-height: 54vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.coupon-item {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid rgba(155,48,255,0.3);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: border-color 0.2s ease;
+}
+.coupon-item:hover { border-color: var(--crimson); }
+.coupon-item.used { opacity: 0.55; }
+.coupon-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.coupon-item-serial {
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.coupon-item-desc {
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.coupon-item-badge {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(155,48,255,0.4);
+  color: var(--muted);
+}
+.coupon-item.used .coupon-item-badge {
+  border-color: rgba(155,48,255,0.6);
+  color: var(--gold);
+}
+.coupon-status-badge {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+.coupon-status-badge.used { color: var(--gold); }
+.scan-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0C0118;
+  border: 1px solid rgba(155,48,255,0.45);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 60px rgba(255,47,214,0.08) inset;
+  margin-top: 22px;
+}
+.scan-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.scan-reticle {
+  position: absolute;
+  inset: 12%;
+  border: 2px solid rgba(255,47,214,0.7);
+  border-radius: 12px;
+  box-shadow: 0 0 24px rgba(255,47,214,0.4);
+  pointer-events: none;
+}
+.coupon-scan-status { margin-top: 16px; }
 
 @media (prefers-reduced-motion: reduce) {
   .die-cube { transition: transform 0.05s linear; }
