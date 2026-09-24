@@ -1334,64 +1334,78 @@
   cardmatchBackGamesBtn.addEventListener("click", () => showScreen("screen-game-pick"));
 
   // ---- Coupons ----
-  const COUPONS_KEY = "positions_coupons_v1";
+  // Catalog (serial + description) comes from coupons-data.csv, same as the
+  // other games' content. Only which serials are "used" is stateful, so that
+  // alone is tracked in localStorage — mirroring how Positions' catalog comes
+  // from data.js while its "tried" set lives separately in localStorage.
+  const COUPONS_USED_KEY = "positions_coupons_used_v1";
   const splitCouponsBtn = document.getElementById("split-coupons");
   const backCouponsBtn = document.getElementById("back-coupons");
-  const couponsAddBtn = document.getElementById("coupons-add-btn");
   const couponsScanBtn = document.getElementById("coupons-scan-btn");
   const couponsListEl = document.getElementById("coupons-list");
   const couponsEmptyEl = document.getElementById("coupons-empty");
 
-  const backCouponAddBtn = document.getElementById("back-coupon-add");
-  const couponAddForm = document.getElementById("coupon-add-form");
-  const couponAddSerialInput = document.getElementById("coupon-add-serial");
-  const couponAddDescInput = document.getElementById("coupon-add-desc");
-  const couponAddErrorEl = document.getElementById("coupon-add-error");
-
   const backCouponScanBtn = document.getElementById("back-coupon-scan");
   const couponScanVideo = document.getElementById("coupon-scan-video");
   const couponScanStatusEl = document.getElementById("coupon-scan-status");
-  const couponScanAddBtn = document.getElementById("coupon-scan-add-btn");
 
   const backCouponDetailBtn = document.getElementById("back-coupon-detail");
-  const couponDeleteBtn = document.getElementById("coupon-delete-btn");
   const couponDetailSerialEl = document.getElementById("coupon-detail-serial");
   const couponDetailStatusEl = document.getElementById("coupon-detail-status");
   const couponDetailDescEl = document.getElementById("coupon-detail-desc");
   const couponToggleUsedBtn = document.getElementById("coupon-toggle-used-btn");
   const couponToggleUsedLabelEl = document.getElementById("coupon-toggle-used-label");
 
-  let couponReturnFromScan = false;
+  let COUPONS = []; // [{serial, text}], loaded from coupons-data.csv
   let couponDetailSerial = null; // currently-viewed coupon's serial, for the detail screen
 
-  function loadCoupons() {
+  fetch("coupons-data.csv?v=1")
+    .then((res) => res.text())
+    .then((text) => {
+      const rows = parseCSV(text);
+      rows.shift(); // drop header row
+      COUPONS = rows
+        .filter(([serial, desc]) => serial && desc)
+        .map(([serial, desc]) => ({ serial: serial.trim(), text: desc.trim() }));
+      renderCouponsList();
+    })
+    .catch(() => {
+      /* CSV unreachable (e.g. opened via file:// instead of a server) — list stays empty */
+    });
+
+  function loadUsedSerials() {
     try {
-      const raw = localStorage.getItem(COUPONS_KEY);
-      return raw ? JSON.parse(raw) : [];
+      const raw = localStorage.getItem(COUPONS_USED_KEY);
+      return raw ? new Set(JSON.parse(raw)) : new Set();
     } catch (e) {
-      return [];
+      return new Set();
     }
   }
-  function saveCoupons(coupons) {
+  function saveUsedSerials(set) {
     try {
-      localStorage.setItem(COUPONS_KEY, JSON.stringify(coupons));
+      localStorage.setItem(COUPONS_USED_KEY, JSON.stringify([...set]));
     } catch (e) {
-      /* localStorage unavailable, coupons just won't persist */
+      /* localStorage unavailable, used-state just won't persist */
     }
   }
+  let couponsUsedSet = loadUsedSerials();
+
   function findCouponBySerial(serial) {
     const target = serial.trim().toLowerCase();
-    return loadCoupons().find((c) => c.serial.trim().toLowerCase() === target) || null;
+    return COUPONS.find((c) => c.serial.toLowerCase() === target) || null;
+  }
+  function isCouponUsed(serial) {
+    return couponsUsedSet.has(serial.toLowerCase());
   }
 
   function renderCouponsList() {
-    const coupons = loadCoupons();
     couponsListEl.innerHTML = "";
-    couponsEmptyEl.classList.toggle("hidden", coupons.length > 0);
-    coupons.forEach((coupon) => {
+    couponsEmptyEl.classList.toggle("hidden", COUPONS.length > 0);
+    COUPONS.forEach((coupon) => {
+      const used = isCouponUsed(coupon.serial);
       const item = document.createElement("button");
       item.type = "button";
-      item.className = "coupon-item" + (coupon.used ? " used" : "");
+      item.className = "coupon-item" + (used ? " used" : "");
 
       const text = document.createElement("div");
       text.className = "coupon-item-text";
@@ -1400,13 +1414,13 @@
       serialEl.textContent = coupon.serial;
       const descEl = document.createElement("span");
       descEl.className = "coupon-item-desc";
-      descEl.textContent = coupon.desc;
+      descEl.textContent = coupon.text;
       text.appendChild(serialEl);
       text.appendChild(descEl);
 
       const badge = document.createElement("span");
       badge.className = "coupon-item-badge";
-      badge.textContent = coupon.used ? "Used" : "Available";
+      badge.textContent = used ? "Used" : "Available";
 
       item.appendChild(text);
       item.appendChild(badge);
@@ -1421,41 +1435,6 @@
   });
   backCouponsBtn.addEventListener("click", () => showScreen("screen-split"));
 
-  couponsAddBtn.addEventListener("click", () => {
-    couponAddSerialInput.value = "";
-    couponAddDescInput.value = "";
-    couponAddErrorEl.classList.add("hidden");
-    showScreen("screen-coupon-add");
-  });
-  backCouponAddBtn.addEventListener("click", () => showScreen("screen-coupons"));
-
-  function addCoupon(serial, desc) {
-    const coupons = loadCoupons();
-    coupons.unshift({ serial, desc, used: false, createdAt: Date.now() });
-    saveCoupons(coupons);
-  }
-
-  couponAddForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const serial = couponAddSerialInput.value.trim();
-    const desc = couponAddDescInput.value.trim();
-    if (!serial || !desc) return;
-    if (findCouponBySerial(serial)) {
-      couponAddErrorEl.textContent = "A coupon with that serial number already exists.";
-      couponAddErrorEl.classList.remove("hidden");
-      return;
-    }
-    couponAddErrorEl.classList.add("hidden");
-    addCoupon(serial, desc);
-    if (couponReturnFromScan) {
-      couponReturnFromScan = false;
-      showCouponDetail(serial);
-    } else {
-      showScreen("screen-coupons");
-      renderCouponsList();
-    }
-  });
-
   // ---- Coupons: detail screen ----
   function showCouponDetail(serial) {
     const coupon = findCouponBySerial(serial);
@@ -1464,12 +1443,13 @@
       renderCouponsList();
       return;
     }
+    const used = isCouponUsed(coupon.serial);
     couponDetailSerial = coupon.serial;
     couponDetailSerialEl.textContent = coupon.serial;
-    couponDetailDescEl.textContent = coupon.desc;
-    couponDetailStatusEl.textContent = coupon.used ? "Used" : "Available";
-    couponDetailStatusEl.classList.toggle("used", coupon.used);
-    couponToggleUsedLabelEl.textContent = coupon.used ? "Mark as not used" : "Mark as used";
+    couponDetailDescEl.textContent = coupon.text;
+    couponDetailStatusEl.textContent = used ? "Used" : "Available";
+    couponDetailStatusEl.classList.toggle("used", used);
+    couponToggleUsedLabelEl.textContent = used ? "Mark as not used" : "Mark as used";
     showScreen("screen-coupon-detail");
   }
 
@@ -1480,21 +1460,14 @@
 
   couponToggleUsedBtn.addEventListener("click", () => {
     if (!couponDetailSerial) return;
-    const coupons = loadCoupons();
-    const coupon = coupons.find((c) => c.serial === couponDetailSerial);
-    if (!coupon) return;
-    coupon.used = !coupon.used;
-    saveCoupons(coupons);
-    showCouponDetail(coupon.serial);
-  });
-
-  couponDeleteBtn.addEventListener("click", () => {
-    if (!couponDetailSerial) return;
-    const coupons = loadCoupons().filter((c) => c.serial !== couponDetailSerial);
-    saveCoupons(coupons);
-    couponDetailSerial = null;
-    showScreen("screen-coupons");
-    renderCouponsList();
+    const key = couponDetailSerial.toLowerCase();
+    if (couponsUsedSet.has(key)) {
+      couponsUsedSet.delete(key);
+    } else {
+      couponsUsedSet.add(key);
+    }
+    saveUsedSerials(couponsUsedSet);
+    showCouponDetail(couponDetailSerial);
   });
 
   // ---- Coupons: QR scan ----
@@ -1502,7 +1475,6 @@
   let couponScanRAF = null;
   const couponScanCanvas = document.createElement("canvas");
   const couponScanCtx = couponScanCanvas.getContext("2d", { willReadFrequently: true });
-  let couponScanLastRaw = "";
 
   function stopCouponScan() {
     if (couponScanRAF) {
@@ -1536,7 +1508,6 @@
         const imageData = couponScanCtx.getImageData(0, 0, w, h);
         const code = jsQR(imageData.data, w, h, { inversionAttempts: "dontInvert" });
         if (code && code.data) {
-          couponScanLastRaw = code.data;
           stopCouponScan();
           handleScannedSerial(code.data);
           return;
@@ -1550,18 +1521,14 @@
     const serial = rawText.trim();
     const coupon = findCouponBySerial(serial);
     if (coupon) {
-      couponScanAddBtn.classList.add("hidden");
       showCouponDetail(coupon.serial);
       return;
     }
-    couponScanStatusEl.textContent = `No coupon found for serial "${serial}".`;
-    couponScanAddBtn.classList.remove("hidden");
+    couponScanStatusEl.textContent = `No coupon found for serial "${serial}" — add it to coupons-data.csv.`;
   }
 
   function startCouponScan() {
     couponScanStatusEl.textContent = "Point your camera at the coupon's QR code.";
-    couponScanAddBtn.classList.add("hidden");
-    couponScanLastRaw = "";
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       couponScanStatusEl.textContent = "Camera access isn't available in this browser.";
@@ -1592,14 +1559,6 @@
     stopCouponScan();
     showScreen("screen-coupons");
     renderCouponsList();
-  });
-
-  couponScanAddBtn.addEventListener("click", () => {
-    couponReturnFromScan = true;
-    couponAddSerialInput.value = couponScanLastRaw;
-    couponAddDescInput.value = "";
-    couponAddErrorEl.classList.add("hidden");
-    showScreen("screen-coupon-add");
   });
 
   // ---- Draw screen logic ----

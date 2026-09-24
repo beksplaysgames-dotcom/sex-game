@@ -586,7 +586,6 @@
     <section id="screen-coupons" class="screen">
       <div class="draw-topbar">
         <button id="back-coupons" class="icon-btn" aria-label="Back to menu">←</button>
-        <button id="coupons-add-btn" class="icon-btn" aria-label="Add a coupon" title="Add a coupon">+</button>
       </div>
       <p class="eyebrow">redeem together</p>
       <h1 class="title tod-title">Coupons</h1>
@@ -596,25 +595,7 @@
       </button>
 
       <div id="coupons-list" class="coupon-list"></div>
-      <p id="coupons-empty" class="match-empty hidden">No coupons yet — scan one or add it by hand.</p>
-    </section>
-
-    <!-- COUPONS — ADD SCREEN -->
-    <section id="screen-coupon-add" class="screen">
-      <div class="draw-topbar">
-        <button id="back-coupon-add" class="icon-btn" aria-label="Back to coupons">←</button>
-      </div>
-      <h2 class="section-title">Add a coupon</h2>
-      <p class="subtitle">Match the serial number on the physical coupon.</p>
-      <form id="coupon-add-form" class="names-form">
-        <input id="coupon-add-serial" class="name-input" type="text" placeholder="Serial number" maxlength="40" required />
-        <input id="coupon-add-desc" class="name-input" type="text" placeholder="What does it redeem?" maxlength="120" required />
-        <p id="coupon-add-error" class="form-error hidden"></p>
-        <button type="submit" class="draw-btn primary names-submit">
-          <span class="check-mark">✓</span>
-          <span class="draw-label">Save coupon</span>
-        </button>
-      </form>
+      <p id="coupons-empty" class="match-empty hidden">No coupons yet — add some to coupons-data.csv.</p>
     </section>
 
     <!-- COUPONS — SCAN SCREEN -->
@@ -630,16 +611,12 @@
         <div class="scan-reticle"></div>
       </div>
       <p id="coupon-scan-status" class="subtitle coupon-scan-status"></p>
-      <button id="coupon-scan-add-btn" class="draw-btn primary hidden" type="button">
-        <span class="draw-label">Add this coupon</span>
-      </button>
     </section>
 
     <!-- COUPONS — DETAIL SCREEN -->
     <section id="screen-coupon-detail" class="screen">
       <div class="draw-topbar">
         <button id="back-coupon-detail" class="icon-btn" aria-label="Back to coupons">←</button>
-        <button id="coupon-delete-btn" class="icon-btn" aria-label="Delete coupon" title="Delete coupon">×</button>
       </div>
       <p class="eyebrow" id="coupon-detail-serial"></p>
       <h1 class="title tod-title">Coupon</h1>
@@ -683,6 +660,6 @@
   </script>
   <script src="data.js?v=3"></script>
   <script src="jsQR.min.js?v=1"></script>
-  <script src="script.js?v=25"></script>
+  <script src="script.js?v=26"></script>
 </body>
 </html>
