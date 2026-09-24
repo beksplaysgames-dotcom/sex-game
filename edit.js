@@ -1,32 +1,5 @@
 (function () {
   const TIERS = ["Easy", "Medium", "Hard", "Extreme"];
-  const THEME_KEY = "positions_theme_v1";
-
-  // ---- Theme toggle (classic / neon), shared with the main app via localStorage ----
-  const themeToggleBtn = document.getElementById("theme-toggle");
-  function applyTheme(theme) {
-    if (theme === "neon") {
-      document.documentElement.setAttribute("data-theme", "neon");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-    }
-  }
-  let currentTheme = "classic";
-  try {
-    currentTheme = localStorage.getItem(THEME_KEY) || "classic";
-  } catch (e) {
-    /* localStorage unavailable, default to classic */
-  }
-  applyTheme(currentTheme);
-  themeToggleBtn.addEventListener("click", () => {
-    currentTheme = currentTheme === "neon" ? "classic" : "neon";
-    applyTheme(currentTheme);
-    try {
-      localStorage.setItem(THEME_KEY, currentTheme);
-    } catch (e) {
-      /* localStorage unavailable, theme choice just won't persist */
-    }
-  });
 
   // ---- Tabs ----
   document.querySelectorAll(".edit-tab").forEach((tab) => {
@@ -372,5 +345,247 @@ const POSITIONS = [
       });
     });
     copyToClipboard(["die,tier,text"].concat(rows).join("\n") + "\n");
+  });
+
+  // ============================================================
+  // TEASE / LICK / KISS / BITE
+  // ============================================================
+  // { Easy: [8 body parts], Medium: [...], ... }
+  let tlkbState = {};
+  const tlkbGroupsEl = document.getElementById("tlkb-groups");
+
+  function renderTlkb() {
+    tlkbGroupsEl.innerHTML = "";
+    TIERS.forEach((tier) => {
+      const group = document.createElement("div");
+      group.className = "dice-tier-group";
+      group.dataset.tier = tier;
+
+      const heading = document.createElement("p");
+      heading.className = "dice-tier-heading";
+      heading.textContent = tier;
+      group.appendChild(heading);
+
+      const parts = tlkbState[tier];
+      const label = document.createElement("p");
+      label.className = "dice-die-label";
+      const countClass = parts.length === 8 ? "ok" : "bad";
+      label.innerHTML = `Body parts <span class="dice-die-count ${countClass}">(${parts.length}/8)</span>`;
+      group.appendChild(label);
+
+      const list = document.createElement("div");
+      list.className = "edit-list";
+      parts.forEach((part, i) => {
+        const row = document.createElement("div");
+        row.className = "edit-row";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "edit-row-text";
+        input.value = part;
+        input.addEventListener("input", () => { parts[i] = input.value; });
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "edit-row-remove";
+        removeBtn.textContent = "×";
+        removeBtn.addEventListener("click", () => {
+          parts.splice(i, 1);
+          renderTlkb();
+        });
+        row.appendChild(input);
+        row.appendChild(removeBtn);
+        list.appendChild(row);
+      });
+      group.appendChild(list);
+
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "edit-btn";
+      addBtn.style.marginTop = "10px";
+      addBtn.textContent = "+ Add body part";
+      addBtn.addEventListener("click", () => {
+        parts.push("");
+        renderTlkb();
+        const newGroup = tlkbGroupsEl.querySelector(`[data-tier="${tier}"]`);
+        const lastInput = newGroup.querySelector(".edit-row:last-of-type .edit-row-text");
+        lastInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        lastInput.focus();
+      });
+      group.appendChild(addBtn);
+
+      tlkbGroupsEl.appendChild(group);
+    });
+  }
+
+  fetch("tlkb-data.csv?v=1")
+    .then((res) => res.text())
+    .then((text) => {
+      const rows = parseCSV(text);
+      rows.shift();
+      const byTier = {};
+      TIERS.forEach((tier) => { byTier[tier] = []; });
+      rows.forEach(([tier, prompt]) => {
+        if (!tier || !prompt) return;
+        const tierKey = TIERS.find((t) => t.toLowerCase() === tier.trim().toLowerCase());
+        if (tierKey) byTier[tierKey].push(prompt.trim());
+      });
+      tlkbState = byTier;
+      renderTlkb();
+    })
+    .catch(() => {
+      tlkbGroupsEl.textContent = "Couldn't load tlkb-data.csv (open this page over http/https, not by double-clicking the file).";
+    });
+
+  document.getElementById("tlkb-copy").addEventListener("click", () => {
+    const rows = [];
+    TIERS.forEach((tier) => {
+      tlkbState[tier].forEach((part) => {
+        rows.push(`${csvField(tier)},${csvField(part)}`);
+      });
+    });
+    copyToClipboard(["tier,text"].concat(rows).join("\n") + "\n");
+  });
+
+  // ============================================================
+  // CARD MATCH
+  // ============================================================
+  let cardmatchState = [];
+  const cardmatchListEl = document.getElementById("cardmatch-list");
+  const cardmatchCountEl = document.getElementById("cardmatch-count");
+
+  function renderCardmatch() {
+    cardmatchCountEl.textContent = `${cardmatchState.length} cards total`;
+    cardmatchListEl.innerHTML = "";
+    cardmatchState.forEach((entry) => {
+      const row = document.createElement("div");
+      row.className = "edit-row";
+
+      const tierSelect = document.createElement("select");
+      TIERS.forEach((tier) => {
+        const opt = document.createElement("option");
+        opt.value = tier;
+        opt.textContent = tier;
+        if (tier === entry.tier) opt.selected = true;
+        tierSelect.appendChild(opt);
+      });
+      tierSelect.addEventListener("change", () => { entry.tier = tierSelect.value; });
+
+      const textInput = document.createElement("input");
+      textInput.type = "text";
+      textInput.className = "edit-row-text";
+      textInput.value = entry.text;
+      textInput.addEventListener("input", () => { entry.text = textInput.value; });
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "edit-row-remove";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", () => {
+        const idx = cardmatchState.indexOf(entry);
+        if (idx !== -1) cardmatchState.splice(idx, 1);
+        renderCardmatch();
+      });
+
+      row.appendChild(tierSelect);
+      row.appendChild(textInput);
+      row.appendChild(removeBtn);
+      cardmatchListEl.appendChild(row);
+    });
+  }
+
+  fetch("cardmatch-data.csv?v=1")
+    .then((res) => res.text())
+    .then((text) => {
+      const rows = parseCSV(text);
+      rows.shift();
+      cardmatchState = rows
+        .filter(([tier, prompt]) => tier && prompt)
+        .map(([tier, prompt]) => ({ tier: tier.trim(), text: prompt.trim() }));
+      renderCardmatch();
+    })
+    .catch(() => {
+      cardmatchCountEl.textContent = "Couldn't load cardmatch-data.csv (open this page over http/https, not by double-clicking the file).";
+    });
+
+  document.getElementById("cardmatch-add").addEventListener("click", () => {
+    cardmatchState.push({ tier: "Easy", text: "" });
+    renderCardmatch();
+    cardmatchListEl.lastElementChild.scrollIntoView({ behavior: "smooth", block: "center" });
+    cardmatchListEl.lastElementChild.querySelector("input").focus();
+  });
+
+  document.getElementById("cardmatch-copy").addEventListener("click", () => {
+    const rows = cardmatchState.map((e) => `${csvField(e.tier)},${csvField(e.text)}`);
+    copyToClipboard(["tier,text"].concat(rows).join("\n") + "\n");
+  });
+
+  // ============================================================
+  // COUPONS
+  // ============================================================
+  let couponsState = [];
+  const couponsListEl = document.getElementById("coupons-list");
+  const couponsCountEl = document.getElementById("coupons-count");
+
+  function renderCoupons() {
+    couponsCountEl.textContent = `${couponsState.length} coupons total`;
+    couponsListEl.innerHTML = "";
+    couponsState.forEach((entry) => {
+      const row = document.createElement("div");
+      row.className = "edit-row";
+
+      const serialInput = document.createElement("input");
+      serialInput.type = "text";
+      serialInput.placeholder = "Serial number";
+      serialInput.style.minWidth = "140px";
+      serialInput.value = entry.serial;
+      serialInput.addEventListener("input", () => { entry.serial = serialInput.value; });
+
+      const textInput = document.createElement("input");
+      textInput.type = "text";
+      textInput.className = "edit-row-text";
+      textInput.placeholder = "What does it redeem?";
+      textInput.value = entry.text;
+      textInput.addEventListener("input", () => { entry.text = textInput.value; });
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "edit-row-remove";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", () => {
+        const idx = couponsState.indexOf(entry);
+        if (idx !== -1) couponsState.splice(idx, 1);
+        renderCoupons();
+      });
+
+      row.appendChild(serialInput);
+      row.appendChild(textInput);
+      row.appendChild(removeBtn);
+      couponsListEl.appendChild(row);
+    });
+  }
+
+  fetch("coupons-data.csv?v=1")
+    .then((res) => res.text())
+    .then((text) => {
+      const rows = parseCSV(text);
+      rows.shift();
+      couponsState = rows
+        .filter(([serial, desc]) => serial && desc)
+        .map(([serial, desc]) => ({ serial: serial.trim(), text: desc.trim() }));
+      renderCoupons();
+    })
+    .catch(() => {
+      couponsCountEl.textContent = "Couldn't load coupons-data.csv (open this page over http/https, not by double-clicking the file).";
+    });
+
+  document.getElementById("coupons-add").addEventListener("click", () => {
+    couponsState.push({ serial: "", text: "" });
+    renderCoupons();
+    couponsListEl.lastElementChild.scrollIntoView({ behavior: "smooth", block: "center" });
+    couponsListEl.lastElementChild.querySelector("input").focus();
+  });
+
+  document.getElementById("coupons-copy").addEventListener("click", () => {
+    const rows = couponsState.map((e) => `${csvField(e.serial)},${csvField(e.text)}`);
+    copyToClipboard(["serial,text"].concat(rows).join("\n") + "\n");
   });
 })();

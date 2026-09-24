@@ -6,12 +6,10 @@
 <title>Edit Content</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=17" />
-<link rel="stylesheet" href="edit.css?v=1" />
+<link rel="stylesheet" href="style.css?v=27" />
+<link rel="stylesheet" href="edit.css?v=2" />
 </head>
 <body>
-
-  <button id="theme-toggle" class="theme-toggle" aria-label="Toggle neon theme" title="Toggle neon theme">&#10022;</button>
 
   <div class="edit-page">
     <p class="eyebrow">not linked anywhere in the app</p>
@@ -22,6 +20,9 @@
       <button class="edit-tab active" type="button" data-target="panel-positions">Positions</button>
       <button class="edit-tab" type="button" data-target="panel-tod">Truth or Dare</button>
       <button class="edit-tab" type="button" data-target="panel-dice">Dice Game</button>
+      <button class="edit-tab" type="button" data-target="panel-tlkb">Tease/Lick/Kiss/Bite</button>
+      <button class="edit-tab" type="button" data-target="panel-cardmatch">Card Match</button>
+      <button class="edit-tab" type="button" data-target="panel-coupons">Coupons</button>
     </div>
 
     <!-- POSITIONS -->
@@ -59,6 +60,35 @@
       <div id="dice-groups"></div>
     </section>
 
+    <!-- TEASE/LICK/KISS/BITE -->
+    <section id="panel-tlkb" class="edit-panel">
+      <div class="edit-toolbar">
+        <button id="tlkb-copy" class="edit-btn primary" type="button">Copy updated CSV</button>
+      </div>
+      <p class="edit-hint">Each tier needs exactly 8 body parts — one per wheel segment.</p>
+      <div id="tlkb-groups"></div>
+    </section>
+
+    <!-- CARD MATCH -->
+    <section id="panel-cardmatch" class="edit-panel">
+      <div class="edit-toolbar">
+        <button id="cardmatch-add" class="edit-btn" type="button">+ Add card</button>
+        <button id="cardmatch-copy" class="edit-btn primary" type="button">Copy updated CSV</button>
+      </div>
+      <p id="cardmatch-count" class="edit-count"></p>
+      <div id="cardmatch-list" class="edit-list"></div>
+    </section>
+
+    <!-- COUPONS -->
+    <section id="panel-coupons" class="edit-panel">
+      <div class="edit-toolbar">
+        <button id="coupons-add" class="edit-btn" type="button">+ Add coupon</button>
+        <button id="coupons-copy" class="edit-btn primary" type="button">Copy updated CSV</button>
+      </div>
+      <p id="coupons-count" class="edit-count"></p>
+      <div id="coupons-list" class="edit-list"></div>
+    </section>
+
     <div class="edit-output-wrap hidden" id="output-wrap">
       <p class="edit-hint">Copied! If your browser blocked the automatic copy, select all the text below and copy it manually.</p>
       <textarea id="copy-output" class="edit-output" readonly></textarea>
@@ -66,6 +96,6 @@
   </div>
 
   <script src="data.js?v=3"></script>
-  <script src="edit.js?v=1"></script>
+  <script src="edit.js?v=2"></script>
 </body>
 </html>

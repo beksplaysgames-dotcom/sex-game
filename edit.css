@@ -22,7 +22,7 @@
 }
 .edit-tab {
   background: var(--card);
-  border: 1px solid rgba(212,175,55,0.3);
+  border: 1px solid rgba(155,48,255,0.3);
   color: var(--muted);
   font-family: 'Inter', sans-serif;
   font-weight: 700;
@@ -37,7 +37,7 @@
 .edit-tab.active {
   border-color: var(--crimson);
   color: var(--cream);
-  background: linear-gradient(135deg, rgba(212,31,60,0.25) 0%, var(--card) 100%);
+  background: linear-gradient(135deg, rgba(255,47,214,0.25) 0%, var(--card) 100%);
 }
 
 .edit-panel { display: none; }
@@ -54,7 +54,7 @@
   flex: 1;
   min-width: 160px;
   background: var(--card);
-  border: 1px solid rgba(212,175,55,0.35);
+  border: 1px solid rgba(155,48,255,0.35);
   border-radius: 8px;
   padding: 10px 14px;
   color: var(--cream);
@@ -65,7 +65,7 @@
 
 .edit-btn {
   background: var(--card);
-  border: 1px solid rgba(212,175,55,0.4);
+  border: 1px solid rgba(155,48,255,0.4);
   color: var(--cream);
   font-family: 'Inter', sans-serif;
   font-weight: 700;
@@ -79,9 +79,9 @@
 .edit-btn:hover { border-color: var(--gold); }
 .edit-btn.primary {
   background: linear-gradient(135deg, var(--crimson) 0%, var(--crimson-dark) 100%);
-  border-color: rgba(212,175,55,0.4);
+  border-color: rgba(155,48,255,0.4);
 }
-.edit-btn.primary:hover { box-shadow: 0 6px 20px rgba(212,31,60,0.35); }
+.edit-btn.primary:hover { box-shadow: 0 6px 20px rgba(255,47,214,0.35); }
 
 .edit-count, .edit-hint {
   font-family: 'Inter', sans-serif;
@@ -101,14 +101,14 @@
   gap: 8px;
   align-items: center;
   background: var(--card);
-  border: 1px solid rgba(212,175,55,0.25);
+  border: 1px solid rgba(155,48,255,0.25);
   border-radius: 8px;
   padding: 10px;
   flex-wrap: wrap;
 }
 .edit-row input[type="text"] {
   background: transparent;
-  border: 1px solid rgba(212,175,55,0.3);
+  border: 1px solid rgba(155,48,255,0.3);
   border-radius: 6px;
   padding: 8px 10px;
   color: var(--cream);
@@ -118,7 +118,7 @@
 .edit-row .edit-row-text { flex: 1; min-width: 140px; }
 .edit-row select {
   background: var(--bg-deep);
-  border: 1px solid rgba(212,175,55,0.3);
+  border: 1px solid rgba(155,48,255,0.3);
   border-radius: 6px;
   padding: 8px 10px;
   color: var(--cream);
@@ -127,7 +127,7 @@
 }
 .edit-row-remove {
   background: transparent;
-  border: 1px solid rgba(212,31,60,0.4);
+  border: 1px solid rgba(255,47,214,0.4);
   color: var(--crimson);
   border-radius: 6px;
   width: 30px;
@@ -135,7 +135,7 @@
   cursor: pointer;
   flex-shrink: 0;
 }
-.edit-row-remove:hover { background: rgba(212,31,60,0.15); }
+.edit-row-remove:hover { background: rgba(255,47,214,0.15); }
 
 .dice-tier-group {
   margin-bottom: 28px;
@@ -172,7 +172,7 @@
   width: 100%;
   min-height: 200px;
   background: var(--card);
-  border: 1px solid rgba(212,175,55,0.35);
+  border: 1px solid rgba(155,48,255,0.35);
   border-radius: 8px;
   padding: 14px;
   color: var(--cream);
