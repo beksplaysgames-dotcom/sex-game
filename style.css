@@ -634,6 +634,10 @@ p.dice-result { margin-top: 48px; }
   margin: 0 0 12px;
 }
 .coupon-status-badge.used { color: var(--gold); }
+#coupon-toggle-used-btn {
+  width: 100%;
+  margin-top: 20px;
+}
 .scan-frame {
   position: relative;
   width: 100%;
