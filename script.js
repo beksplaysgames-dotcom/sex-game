@@ -1579,6 +1579,7 @@
   const ludoWinTextEl = document.getElementById("ludo-win-text");
   const ludoPlayAgainBtn = document.getElementById("ludo-play-again");
   const ludoBackGamesBtn = document.getElementById("ludo-back-games");
+  const ludoBackGamesLabelEl = document.getElementById("ludo-back-games-label");
 
   const LUDO_SQUARES = 20;
   // Which dots (of a 3x3 grid, row-major 0-8) are lit for each pip value 1-6.
@@ -1615,6 +1616,7 @@
   let ludoBoardData = {}; // { Easy: [20 texts], Medium: [...], ... }
   let ludoPlayers = [{ totalSteps: 0 }, { totalSteps: 0 }];
   const ludoDieState = { x: 0, y: 0, lastFace: -1 };
+  let ludoWinNextTier = null; // set by ludoShowWin(); which tier "level up" leads to, if any
 
   TIERS.forEach((tier) => {
     const opt = document.createElement("option");
@@ -1715,6 +1717,11 @@
     ludoRollBtn.classList.add("hidden");
     ludoRevealEl.classList.add("hidden");
     ludoNextBtn.classList.add("hidden");
+
+    const tierIdx = TIERS.indexOf(ludoTier);
+    ludoWinNextTier = tierIdx < TIERS.length - 1 ? TIERS[tierIdx + 1] : null;
+    ludoBackGamesLabelEl.textContent = ludoWinNextTier ? `Level up to ${ludoWinNextTier}` : "Back to games";
+
     ludoWinEl.classList.remove("hidden");
   }
 
@@ -1806,7 +1813,13 @@
   ludoTierSelect.addEventListener("change", (e) => enterLudo(e.target.value));
 
   ludoPlayAgainBtn.addEventListener("click", () => enterLudo(ludoTier));
-  ludoBackGamesBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+  ludoBackGamesBtn.addEventListener("click", () => {
+    if (ludoWinNextTier) {
+      enterLudo(ludoWinNextTier);
+    } else {
+      showScreen("screen-game-pick");
+    }
+  });
 
   backLudoBtn.addEventListener("click", () => showScreen("screen-game-pick"));
   backLudoStartBtn.addEventListener("click", () => showScreen("screen-game-pick"));
