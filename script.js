@@ -60,7 +60,7 @@
 
   // ---- Split landing screen: Positions vs Game ----
   const PLAYERS_KEY = "positions_players_v1";
-  const GAMES = ["Truth or Dare", "Dice Game", "Jar Game", "Tease · Lick · Kiss · Bite", "Card Match"];
+  const GAMES = ["Truth or Dare", "Dice Game", "Jar Game", "Tease · Lick · Kiss · Bite", "Card Match", "Ludo"];
 
   const splitPositionsBtn = document.getElementById("split-positions");
   const splitGameBtn = document.getElementById("split-game");
@@ -110,6 +110,8 @@
           showScreen("screen-tlkb-start");
         } else if (name === "Card Match") {
           showScreen("screen-cardmatch-start");
+        } else if (name === "Ludo") {
+          showScreen("screen-ludo-start");
         }
       });
       gameListEl.appendChild(btn);
@@ -1560,6 +1562,280 @@
     showScreen("screen-coupons");
     renderCouponsList();
   });
+
+  // ---- Ludo ----
+  const backLudoBtn = document.getElementById("back-ludo");
+  const backLudoStartBtn = document.getElementById("back-ludo-start");
+  const ludoTierSelect = document.getElementById("ludo-tier-select");
+  const ludoTurnEl = document.getElementById("ludo-turn");
+  const ludoBoardEl = document.getElementById("ludo-board");
+  const ludoDieCube = document.getElementById("ludo-die-cube");
+  const ludoRollBtn = document.getElementById("ludo-roll-btn");
+  const ludoRevealEl = document.getElementById("ludo-reveal");
+  const ludoSquareNumEl = document.getElementById("ludo-square-num");
+  const ludoSquareTextEl = document.getElementById("ludo-square-text");
+  const ludoNextBtn = document.getElementById("ludo-next-btn");
+  const ludoWinEl = document.getElementById("ludo-win");
+  const ludoWinTextEl = document.getElementById("ludo-win-text");
+  const ludoPlayAgainBtn = document.getElementById("ludo-play-again");
+  const ludoBackGamesBtn = document.getElementById("ludo-back-games");
+
+  const LUDO_SQUARES = 20;
+  // Which dots (of a 3x3 grid, row-major 0-8) are lit for each pip value 1-6.
+  const LUDO_PIP_LAYOUTS = [
+    [4],
+    [0, 8],
+    [0, 4, 8],
+    [0, 2, 6, 8],
+    [0, 2, 4, 6, 8],
+    [0, 2, 3, 5, 6, 8],
+  ];
+
+  // Perimeter of a 6x6 grid, 20 cells, clockwise from the top-left corner.
+  function buildLudoPositions() {
+    const n = 6;
+    const positions = [];
+    for (let c = 1; c <= n; c++) positions.push({ row: 1, col: c });
+    for (let r = 2; r <= n; r++) positions.push({ row: r, col: n });
+    for (let c = n - 1; c >= 1; c--) positions.push({ row: n, col: c });
+    for (let r = n - 1; r >= 2; r--) positions.push({ row: r, col: 1 });
+    return positions;
+  }
+  const LUDO_POSITIONS = buildLudoPositions();
+
+  const ludoTokenP1 = document.createElement("div");
+  ludoTokenP1.className = "ludo-token ludo-token-p1";
+  const ludoTokenP2 = document.createElement("div");
+  ludoTokenP2.className = "ludo-token ludo-token-p2";
+
+  let ludoTier = "Easy";
+  let ludoPlayerIndex = 0;
+  let ludoRolling = false;
+  let ludoSquareEls = [];
+  let ludoBoardData = {}; // { Easy: [20 texts], Medium: [...], ... }
+  let ludoPlayers = [{ totalSteps: 0 }, { totalSteps: 0 }];
+  const ludoDieState = { x: 0, y: 0, lastFace: -1 };
+
+  TIERS.forEach((tier) => {
+    const opt = document.createElement("option");
+    opt.value = tier;
+    opt.textContent = tier;
+    ludoTierSelect.appendChild(opt);
+  });
+
+  function buildLudoPipGrid(pipValue) {
+    const grid = document.createElement("div");
+    grid.className = "ludo-pip-grid";
+    const lit = new Set(LUDO_PIP_LAYOUTS[pipValue - 1]);
+    for (let i = 0; i < 9; i++) {
+      const dot = document.createElement("span");
+      dot.className = "ludo-pip" + (lit.has(i) ? " on" : "");
+      grid.appendChild(dot);
+    }
+    return grid;
+  }
+
+  DIE_FACE_ORDER.forEach((face, i) => {
+    const faceEl = ludoDieCube.querySelector(`.die-face-${face}`);
+    if (faceEl) faceEl.appendChild(buildLudoPipGrid(i + 1));
+  });
+
+  fetch("ludo-data.csv?v=1")
+    .then((res) => res.text())
+    .then((text) => {
+      const rows = parseCSV(text);
+      rows.shift(); // drop header row
+      const byTier = {};
+      TIERS.forEach((tier) => { byTier[tier] = []; });
+      rows.forEach(([tier, prompt]) => {
+        if (!tier || !prompt) return;
+        const tierKey = TIERS.find((t) => t.toLowerCase() === tier.trim().toLowerCase());
+        if (tierKey) byTier[tierKey].push(prompt.trim());
+      });
+      ludoBoardData = byTier;
+    })
+    .catch(() => {
+      /* CSV unreachable (e.g. opened via file:// instead of a server) — roll will show a fallback message */
+    });
+
+  function ludoTierReady() {
+    const squares = ludoBoardData[ludoTier];
+    return squares && squares.length === LUDO_SQUARES;
+  }
+
+  function renderLudoBoard() {
+    ludoBoardEl.innerHTML = "";
+    ludoSquareEls = [];
+    for (let i = 0; i < LUDO_SQUARES; i++) {
+      const pos = LUDO_POSITIONS[i];
+      const sq = document.createElement("div");
+      sq.className = "ludo-square" + (i === 0 ? " start" : "");
+      sq.style.gridRow = String(pos.row);
+      sq.style.gridColumn = String(pos.col);
+
+      const num = document.createElement("span");
+      num.className = "ludo-square-num";
+      num.textContent = String(i + 1);
+
+      const slot = document.createElement("div");
+      slot.className = "ludo-token-slot";
+
+      sq.appendChild(num);
+      sq.appendChild(slot);
+      ludoBoardEl.appendChild(sq);
+      ludoSquareEls.push(slot);
+    }
+  }
+
+  function placeLudoTokenAt(playerIndex, squareIndex) {
+    const tokenEl = playerIndex === 0 ? ludoTokenP1 : ludoTokenP2;
+    ludoSquareEls[squareIndex].appendChild(tokenEl);
+    tokenEl.style.animation = "none";
+    void tokenEl.offsetWidth; // force reflow so the pop animation replays each hop
+    tokenEl.style.animation = "";
+  }
+
+  function ludoCurrentPlayerName() {
+    const players = loadPlayers();
+    if (!players) return "Player " + (ludoPlayerIndex + 1);
+    return ludoPlayerIndex === 0 ? players.player1 : players.player2;
+  }
+
+  function ludoShowReady() {
+    ludoTurnEl.textContent = `${ludoCurrentPlayerName()}'s turn · ${ludoTier}`;
+    ludoRollBtn.classList.remove("hidden");
+    ludoRollBtn.disabled = false;
+    ludoRevealEl.classList.add("hidden");
+    ludoNextBtn.classList.add("hidden");
+    ludoWinEl.classList.add("hidden");
+  }
+
+  function ludoShowWin() {
+    ludoWinTextEl.textContent = `${ludoCurrentPlayerName()} completes the lap and wins!`;
+    ludoRollBtn.classList.add("hidden");
+    ludoRevealEl.classList.add("hidden");
+    ludoNextBtn.classList.add("hidden");
+    ludoWinEl.classList.remove("hidden");
+  }
+
+  // Rotates the single die to a random new face (never repeating the previous
+  // one) and returns the pip value (1-6) — reuses the Dice Game's rotation
+  // math, just with one cube instead of two.
+  function rollLudoDieFace() {
+    let faceIndex;
+    do {
+      faceIndex = Math.floor(Math.random() * 6);
+    } while (faceIndex === ludoDieState.lastFace);
+    ludoDieState.lastFace = faceIndex;
+
+    const base = DIE_FACE_BASE_ROTATION[faceIndex];
+    const extraX = (2 + Math.floor(Math.random() * 2)) * 360 * (Math.random() < 0.5 ? 1 : -1);
+    const extraY = (2 + Math.floor(Math.random() * 2)) * 360 * (Math.random() < 0.5 ? 1 : -1);
+    const deltaX = (((base.x - ludoDieState.x) % 360) + 360) % 360;
+    const deltaY = (((base.y - ludoDieState.y) % 360) + 360) % 360;
+    ludoDieState.x += deltaX + extraX;
+    ludoDieState.y += deltaY + extraY;
+    ludoDieCube.style.transform = `rotateX(${ludoDieState.x}deg) rotateY(${ludoDieState.y}deg)`;
+    return faceIndex + 1;
+  }
+
+  // Hops the current player's token one square at a time so the roll is felt,
+  // not just teleported. Stops early (and wins) the moment the lap completes,
+  // even mid-roll — an overshoot still finishes the race.
+  function ludoResolveSteps(steps) {
+    const player = ludoPlayers[ludoPlayerIndex];
+    let hopsDone = 0;
+
+    function hop() {
+      hopsDone++;
+      player.totalSteps++;
+      const squareIndex = player.totalSteps % LUDO_SQUARES;
+      placeLudoTokenAt(ludoPlayerIndex, squareIndex);
+
+      if (player.totalSteps >= LUDO_SQUARES) {
+        ludoShowWin();
+        return;
+      }
+      if (hopsDone < steps) {
+        setTimeout(hop, 220);
+      } else {
+        ludoRollBtn.classList.add("hidden");
+        ludoSquareNumEl.textContent = `Square ${squareIndex + 1}`;
+        ludoSquareTextEl.textContent = ludoBoardData[ludoTier][squareIndex];
+        ludoRevealEl.classList.remove("hidden");
+        ludoNextBtn.classList.remove("hidden");
+      }
+    }
+    hop();
+  }
+
+  ludoRollBtn.addEventListener("click", () => {
+    if (ludoRolling) return;
+    if (!ludoTierReady()) {
+      ludoSquareNumEl.textContent = "";
+      ludoSquareTextEl.textContent = `Add exactly ${LUDO_SQUARES} entries for ${ludoTier} to ludo-data.csv.`;
+      ludoRevealEl.classList.remove("hidden");
+      return;
+    }
+    ludoRolling = true;
+    ludoRollBtn.disabled = true;
+    spinCompassOn(ludoRollBtn);
+    const steps = rollLudoDieFace();
+
+    // finish() must only ever run once per roll — transitionend and the
+    // fallback timeout can both end up firing (e.g. a backgrounded tab
+    // delaying transitionend past the fallback), and since finish() kicks
+    // off token movement, running it twice would double the hops.
+    let resolved = false;
+    const finish = () => {
+      if (resolved) return;
+      resolved = true;
+      ludoRolling = false;
+      ludoResolveSteps(steps);
+    };
+    ludoDieCube.addEventListener("transitionend", finish, { once: true });
+    // Fallback in case transitionend never fires (e.g. reduced-motion edge cases).
+    setTimeout(finish, 1400);
+  });
+
+  ludoNextBtn.addEventListener("click", () => {
+    ludoPlayerIndex = ludoPlayerIndex === 0 ? 1 : 0;
+    ludoShowReady();
+  });
+
+  ludoTierSelect.addEventListener("change", (e) => enterLudo(e.target.value));
+
+  ludoPlayAgainBtn.addEventListener("click", () => enterLudo(ludoTier));
+  ludoBackGamesBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+
+  backLudoBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+  backLudoStartBtn.addEventListener("click", () => showScreen("screen-game-pick"));
+
+  document.querySelectorAll(".ludo-start-tier").forEach((card) => {
+    card.addEventListener("click", () => enterLudo(card.dataset.tier));
+  });
+
+  function enterLudo(tier) {
+    ludoTier = tier;
+    ludoTierSelect.value = tier;
+    ludoPlayerIndex = 0;
+    ludoPlayers = [{ totalSteps: 0 }, { totalSteps: 0 }];
+
+    ludoDieState.x = 0;
+    ludoDieState.y = 0;
+    ludoDieState.lastFace = -1;
+    ludoDieCube.style.transition = "none";
+    ludoDieCube.style.transform = "rotateX(0deg) rotateY(0deg)";
+    void ludoDieCube.offsetWidth; // force reflow so transition:none takes effect first
+    ludoDieCube.style.transition = "";
+
+    renderLudoBoard();
+    placeLudoTokenAt(0, 0);
+    placeLudoTokenAt(1, 0);
+
+    showScreen("screen-ludo");
+    ludoShowReady();
+  }
 
   // ---- Draw screen logic ----
   function poolFor(tier) {

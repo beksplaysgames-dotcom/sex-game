@@ -6,7 +6,7 @@
 <title>Edit Content</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=27" />
+<link rel="stylesheet" href="style.css?v=28" />
 <link rel="stylesheet" href="edit.css?v=2" />
 </head>
 <body>
@@ -23,6 +23,7 @@
       <button class="edit-tab" type="button" data-target="panel-tlkb">Tease/Lick/Kiss/Bite</button>
       <button class="edit-tab" type="button" data-target="panel-cardmatch">Card Match</button>
       <button class="edit-tab" type="button" data-target="panel-coupons">Coupons</button>
+      <button class="edit-tab" type="button" data-target="panel-ludo">Ludo</button>
     </div>
 
     <!-- POSITIONS -->
@@ -89,6 +90,15 @@
       <div id="coupons-list" class="edit-list"></div>
     </section>
 
+    <!-- LUDO -->
+    <section id="panel-ludo" class="edit-panel">
+      <div class="edit-toolbar">
+        <button id="ludo-copy" class="edit-btn primary" type="button">Copy updated CSV</button>
+      </div>
+      <p class="edit-hint">Each tier needs exactly 20 squares — one full lap of the board.</p>
+      <div id="ludo-groups"></div>
+    </section>
+
     <div class="edit-output-wrap hidden" id="output-wrap">
       <p class="edit-hint">Copied! If your browser blocked the automatic copy, select all the text below and copy it manually.</p>
       <textarea id="copy-output" class="edit-output" readonly></textarea>
@@ -96,6 +106,6 @@
   </div>
 
   <script src="data.js?v=3"></script>
-  <script src="edit.js?v=2"></script>
+  <script src="edit.js?v=3"></script>
 </body>
 </html>

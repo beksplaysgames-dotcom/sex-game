@@ -588,4 +588,103 @@ const POSITIONS = [
     const rows = couponsState.map((e) => `${csvField(e.serial)},${csvField(e.text)}`);
     copyToClipboard(["serial,text"].concat(rows).join("\n") + "\n");
   });
+
+  // ============================================================
+  // LUDO
+  // ============================================================
+  // { Easy: [20 squares], Medium: [...], ... }
+  let ludoState = {};
+  const LUDO_SQUARES = 20;
+  const ludoGroupsEl = document.getElementById("ludo-groups");
+
+  function renderLudo() {
+    ludoGroupsEl.innerHTML = "";
+    TIERS.forEach((tier) => {
+      const group = document.createElement("div");
+      group.className = "dice-tier-group";
+      group.dataset.tier = tier;
+
+      const heading = document.createElement("p");
+      heading.className = "dice-tier-heading";
+      heading.textContent = tier;
+      group.appendChild(heading);
+
+      const squares = ludoState[tier];
+      const label = document.createElement("p");
+      label.className = "dice-die-label";
+      const countClass = squares.length === LUDO_SQUARES ? "ok" : "bad";
+      label.innerHTML = `Squares <span class="dice-die-count ${countClass}">(${squares.length}/${LUDO_SQUARES})</span>`;
+      group.appendChild(label);
+
+      const list = document.createElement("div");
+      list.className = "edit-list";
+      squares.forEach((square, i) => {
+        const row = document.createElement("div");
+        row.className = "edit-row";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "edit-row-text";
+        input.value = square;
+        input.addEventListener("input", () => { squares[i] = input.value; });
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "edit-row-remove";
+        removeBtn.textContent = "×";
+        removeBtn.addEventListener("click", () => {
+          squares.splice(i, 1);
+          renderLudo();
+        });
+        row.appendChild(input);
+        row.appendChild(removeBtn);
+        list.appendChild(row);
+      });
+      group.appendChild(list);
+
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "edit-btn";
+      addBtn.style.marginTop = "10px";
+      addBtn.textContent = "+ Add square";
+      addBtn.addEventListener("click", () => {
+        squares.push("");
+        renderLudo();
+        const newGroup = ludoGroupsEl.querySelector(`[data-tier="${tier}"]`);
+        const lastInput = newGroup.querySelector(".edit-row:last-of-type .edit-row-text");
+        lastInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        lastInput.focus();
+      });
+      group.appendChild(addBtn);
+
+      ludoGroupsEl.appendChild(group);
+    });
+  }
+
+  fetch("ludo-data.csv?v=1")
+    .then((res) => res.text())
+    .then((text) => {
+      const rows = parseCSV(text);
+      rows.shift();
+      const byTier = {};
+      TIERS.forEach((tier) => { byTier[tier] = []; });
+      rows.forEach(([tier, prompt]) => {
+        if (!tier || !prompt) return;
+        const tierKey = TIERS.find((t) => t.toLowerCase() === tier.trim().toLowerCase());
+        if (tierKey) byTier[tierKey].push(prompt.trim());
+      });
+      ludoState = byTier;
+      renderLudo();
+    })
+    .catch(() => {
+      ludoGroupsEl.textContent = "Couldn't load ludo-data.csv (open this page over http/https, not by double-clicking the file).";
+    });
+
+  document.getElementById("ludo-copy").addEventListener("click", () => {
+    const rows = [];
+    TIERS.forEach((tier) => {
+      ludoState[tier].forEach((square) => {
+        rows.push(`${csvField(tier)},${csvField(square)}`);
+      });
+    });
+    copyToClipboard(["tier,text"].concat(rows).join("\n") + "\n");
+  });
 })();
